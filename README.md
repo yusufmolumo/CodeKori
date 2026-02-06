@@ -1,9 +1,9 @@
-# CodeKori 
+# CodeKori 🚀
 
 **CodeKori** is a full-stack learning platform made to empower university students through structured courses, interactive coding challenges, and a vibrant community. A platform with a focus on gamified progression, CodeKori delivers a great educational experience.
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/yusufmolumo/CodeKori)
-[![Video Demo](https://img.shields.io/badge/Video-Demo-red?logo=google-drive)](https://drive.google.com/file/d/1WaVCgXYFCRrm6LsQVaRwhPKfD8nLTv75/view?usp=sharing)
+- **GitHub Repository**: <a href="https://github.com/yusufmolumo/CodeKori" target="_blank">https://github.com/yusufmolumo/CodeKori</a>
+- **Video Demo**: <a href="https://drive.google.com/file/d/1WaVCgXYFCRrm6LsQVaRwhPKfD8nLTv75/view?usp=sharing" target="_blank">https://drive.google.com/file/d/1WaVCgXYFCRrm6LsQVaRwhPKfD8nLTv75/view?usp=sharing</a>
 
 ---
 
