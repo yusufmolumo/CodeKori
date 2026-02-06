@@ -1,4 +1,4 @@
-# CodeKori 🚀
+# CodeKori 
 
 **CodeKori** is a full-stack learning platform made to empower university students through structured courses, interactive coding challenges, and a vibrant community. A platform with a focus on gamified progression, CodeKori delivers a great educational experience.
 
