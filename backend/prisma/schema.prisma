@@ -1,0 +1,418 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String                   @id @default(uuid())
+  email                String                   @unique
+  passwordHash         String                   @map("password_hash")
+  role                 Role                     @default(learner)
+  isVerified           Boolean                  @default(false) @map("is_verified")
+  verificationToken    String?                  @map("verification_token")
+  passwordResetToken   String?                  @map("password_reset_token")
+  passwordResetExpires DateTime?                @map("password_reset_expires")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+  challengeSubmissions ChallengeSubmission[]
+  enrollments          CourseEnrollment[]
+  feedbackResponses    FeedbackResponse[]
+  feedbackSubmissions  FeedbackSubmission[]
+  forumComments        ForumComment[]
+  forumPosts           ForumPost[]
+  forumVotes           ForumVote[]
+  leaderboardEntries   Leaderboard[]
+  mentorshipAsMentee   MentorshipConnection[]   @relation("MenteeConnections")
+  mentorshipAsMentor   MentorshipConnection[]   @relation("MentorConnections")
+  sentMessages         MentorshipMessage[]
+  notificationSettings NotificationPreferences?
+  notifications        Notification[]
+  badges               UserBadge[]
+  gamification         UserGamification?
+  lessonProgress       UserLessonProgress[]
+  profile              UserProfile?
+
+  @@index([email])
+  @@map("users")
+}
+
+model UserProfile {
+  userId            String            @id @map("user_id")
+  fullName          String?           @map("full_name")
+  username          String            @unique
+  bio               String?
+  location          String?
+  avatarUrl         String?           @map("avatar_url")
+  githubUrl         String?           @map("github_url")
+  linkedinUrl       String?           @map("linkedin_url")
+  twitterUrl        String?           @map("twitter_url")
+  profileVisibility ProfileVisibility @map("profile_visibility")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([username])
+  @@map("user_profiles")
+}
+
+model UserGamification {
+  userId        String    @id @map("user_id")
+  totalXp       Int       @default(0) @map("total_xp")
+  level         Int       @default(1)
+  currentStreak Int       @default(0) @map("current_streak")
+  longestStreak Int       @default(0) @map("longest_streak")
+  lastLoginDate DateTime? @map("last_login_date")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_gamification")
+}
+
+model Course {
+  id            String             @id @default(uuid())
+  title         String
+  description   String?
+  difficulty    Difficulty?
+  durationHours Int?               @map("duration_hours")
+  thumbnailUrl  String?            @map("thumbnail_url")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  enrollments   CourseEnrollment[]
+  modules       Module[]
+
+  @@map("courses")
+}
+
+model Module {
+  id          String   @id @default(uuid())
+  courseId    String   @map("course_id")
+  title       String
+  description String?
+  orderIndex  Int      @map("order_index")
+  createdAt   DateTime @default(now()) @map("created_at")
+  lessons     Lesson[]
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("modules")
+}
+
+model Lesson {
+  id                 String               @id @default(uuid())
+  moduleId           String               @map("module_id")
+  title              String
+  content            String
+  videoUrl           String?              @map("video_url")
+  orderIndex         Int                  @map("order_index")
+  xpReward           Int                  @default(10) @map("xp_reward")
+  readingTimeMinutes Int?                 @map("reading_time_minutes")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  module             Module               @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  userProgress       UserLessonProgress[]
+
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+model UserLessonProgress {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  lessonId    String    @map("lesson_id")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@map("user_lesson_progress")
+}
+
+model CourseEnrollment {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  courseId    String    @map("course_id")
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("course_enrollments")
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  iconUrl     String?     @map("icon_url")
+  xpReward    Int         @default(0) @map("xp_reward")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  badgeId  String   @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model Leaderboard {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  weekStart DateTime @map("week_start") @db.Date
+  weekEnd   DateTime @map("week_end") @db.Date
+  xpEarned  Int      @default(0) @map("xp_earned")
+  rank      Int?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart])
+  @@map("leaderboard")
+}
+
+model CodingChallenge {
+  id          String                @id @default(uuid())
+  title       String
+  description String
+  difficulty  ChallengeDifficulty
+  starterCode String?               @map("starter_code")
+  hints       String[]
+  xpReward    Int                   @default(50) @map("xp_reward")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  submissions ChallengeSubmission[]
+
+  @@map("coding_challenges")
+}
+
+model ChallengeSubmission {
+  id            String          @id @default(uuid())
+  challengeId   String          @map("challenge_id")
+  userId        String          @map("user_id")
+  submittedCode String          @map("submitted_code")
+  score         Int
+  passed        Boolean         @default(false)
+  feedback      String?
+  submittedAt   DateTime        @default(now()) @map("submitted_at")
+  challenge     CodingChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("challenge_submissions")
+}
+
+model MentorshipConnection {
+  id                  String               @id @default(uuid())
+  menteeId            String               @map("mentee_id")
+  mentorId            String               @map("mentor_id")
+  status              ConnectionStatus     @default(pending)
+  requestedAt         DateTime             @default(now()) @map("requested_at")
+  approvedAt          DateTime?            @map("approved_at")
+  feedbackSubmissions FeedbackSubmission[]
+  mentee              User                 @relation("MenteeConnections", fields: [menteeId], references: [id], onDelete: Cascade)
+  mentor              User                 @relation("MentorConnections", fields: [mentorId], references: [id], onDelete: Cascade)
+  messages            MentorshipMessage[]
+
+  @@unique([menteeId, mentorId])
+  @@map("mentorship_connections")
+}
+
+model MentorshipMessage {
+  id           String               @id @default(uuid())
+  connectionId String               @map("connection_id")
+  senderId     String               @map("sender_id")
+  content      String
+  sentAt       DateTime             @default(now()) @map("sent_at")
+  connection   MentorshipConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  sender       User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("mentorship_messages")
+}
+
+model FeedbackSubmission {
+  id           String               @id @default(uuid())
+  connectionId String               @map("connection_id")
+  menteeId     String               @map("mentee_id")
+  title        String
+  description  String?
+  codeSnippet  String?              @map("code_snippet")
+  githubLink   String?              @map("github_link")
+  submittedAt  DateTime             @default(now()) @map("submitted_at")
+  responses    FeedbackResponse[]
+  connection   MentorshipConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  mentee       User                 @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+
+  @@map("feedback_submissions")
+}
+
+model FeedbackResponse {
+  id           String             @id @default(uuid())
+  submissionId String             @map("submission_id")
+  mentorId     String             @map("mentor_id")
+  feedback     String
+  rating       Int?
+  respondedAt  DateTime           @default(now()) @map("responded_at")
+  mentor       User               @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  submission   FeedbackSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("feedback_responses")
+}
+
+model ForumCategory {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  posts       ForumPost[]
+
+  @@map("forum_categories")
+}
+
+model ForumPost {
+  id         String         @id @default(uuid())
+  categoryId String         @map("category_id")
+  authorId   String         @map("author_id")
+  title      String
+  content    String
+  tags       String[]
+  upvotes    Int            @default(0)
+  downvotes  Int            @default(0)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  comments   ForumComment[]
+  author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category   ForumCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  votes      ForumVote[]
+
+  @@index([categoryId])
+  @@map("forum_posts")
+}
+
+model ForumComment {
+  id              String         @id @default(uuid())
+  postId          String         @map("post_id")
+  parentCommentId String?        @map("parent_comment_id")
+  authorId        String         @map("author_id")
+  content         String
+  upvotes         Int            @default(0)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  author          User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentComment   ForumComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies         ForumComment[] @relation("CommentReplies")
+  post            ForumPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  votes           ForumVote[]
+
+  @@map("forum_comments")
+}
+
+model ForumVote {
+  id        String        @id @default(uuid())
+  userId    String        @map("user_id")
+  postId    String?       @map("post_id")
+  commentId String?       @map("comment_id")
+  voteType  VoteType      @map("vote_type")
+  comment   ForumComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  post      ForumPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, commentId])
+  @@map("forum_votes")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  content   String?
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model NotificationPreferences {
+  userId         String                @id @map("user_id")
+  emailEnabled   Boolean               @default(true) @map("email_enabled")
+  emailFrequency NotificationFrequency @default(instant) @map("email_frequency")
+  inAppEnabled   Boolean               @default(true) @map("in_app_enabled")
+  pushEnabled    Boolean               @default(false) @map("push_enabled")
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+enum Role {
+  learner
+  mentor
+  admin
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ChallengeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum MentorshipStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  DECLINED
+}
+
+enum ProfileVisibility {
+  public
+  private
+  PUBLIC
+  PRIVATE
+}
+
+enum VoteType {
+  upvote
+  downvote
+}
+
+enum EmailFrequency {
+  INSTANT
+  DAILY
+  WEEKLY
+}
+
+enum ConnectionStatus {
+  pending
+  active
+  completed
+  declined
+}
+
+enum NotificationFrequency {
+  instant
+  daily
+  weekly
+}
+
+enum crdb_internal_region {
+  aws_us_east_1 @map("aws-us-east-1")
+}
