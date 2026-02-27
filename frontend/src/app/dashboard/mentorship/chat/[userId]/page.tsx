@@ -114,7 +114,7 @@ export default function MentorshipChatPage() {
                                 }`}>
                                 <p>{msg.content}</p>
                                 <p className={`text-[10px] mt-1 ${msg.senderId === currentUserId ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                                    {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
                         </div>
