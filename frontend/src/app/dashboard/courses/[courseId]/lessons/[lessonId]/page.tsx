@@ -6,7 +6,7 @@ import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Trophy, PlayCircle, BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -56,7 +56,6 @@ export default function LessonPage() {
             const res = await api.post(`/courses/lessons/${lessonId}/complete`);
             setLesson(prev => prev ? { ...prev, isCompleted: true } : null);
 
-            // Show XP earned
             if (res.data.xpEarned) {
                 // Could add a toast notification here
             }
@@ -93,7 +92,7 @@ export default function LessonPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-8 pb-12">
             {/* Navigation Header */}
             <div className="flex items-center justify-between">
                 <Button
@@ -128,34 +127,129 @@ export default function LessonPage() {
             </div>
 
             {/* Lesson Title */}
-            <h1 className="text-3xl font-bold">{lesson.title}</h1>
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">{lesson.title}</h1>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4" />
+                        Reading + Video Lesson
+                    </span>
+                </div>
+            </div>
 
-            {/* Video (if exists) */}
+            {/* Video Section */}
             {lesson.videoUrl && (
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                <Card className="overflow-hidden border-primary/20">
+                    <div className="p-4 border-b bg-muted/30 flex items-center gap-2">
+                        <PlayCircle className="h-5 w-5 text-primary" />
+                        <h2 className="font-semibold text-sm">Video Lesson</h2>
+                        <span className="text-xs text-muted-foreground ml-auto">Watch the video, then read the notes below</span>
+                    </div>
+                    <CardContent className="p-0">
+                        <div className="aspect-video bg-black">
                             <iframe
                                 src={lesson.videoUrl}
                                 className="w-full h-full"
                                 allowFullScreen
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                title={`Video: ${lesson.title}`}
                             />
                         </div>
                     </CardContent>
                 </Card>
             )}
 
-            {/* Lesson Content */}
+            {/* Written Content Section */}
             <Card>
-                <CardContent className="pt-6 prose prose-slate dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {lesson.content}
-                    </ReactMarkdown>
+                <div className="p-4 border-b bg-muted/30 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold text-sm">Written Notes</h2>
+                </div>
+                <CardContent className="pt-8 pb-10 px-8">
+                    <div className="lesson-content">
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                                h1: ({ children }) => (
+                                    <h1 className="text-2xl font-bold mt-0 mb-6 text-foreground border-b border-border pb-3">{children}</h1>
+                                ),
+                                h2: ({ children }) => (
+                                    <h2 className="text-xl font-bold mt-10 mb-4 text-foreground">{children}</h2>
+                                ),
+                                h3: ({ children }) => (
+                                    <h3 className="text-lg font-semibold mt-8 mb-3 text-foreground">{children}</h3>
+                                ),
+                                h4: ({ children }) => (
+                                    <h4 className="text-base font-semibold mt-6 mb-2 text-foreground">{children}</h4>
+                                ),
+                                p: ({ children }) => (
+                                    <p className="text-[15px] leading-7 mb-5 text-foreground/90">{children}</p>
+                                ),
+                                ul: ({ children }) => (
+                                    <ul className="list-disc pl-6 mb-6 space-y-2">{children}</ul>
+                                ),
+                                ol: ({ children }) => (
+                                    <ol className="list-decimal pl-6 mb-6 space-y-2">{children}</ol>
+                                ),
+                                li: ({ children }) => (
+                                    <li className="text-[15px] leading-7 text-foreground/90">{children}</li>
+                                ),
+                                blockquote: ({ children }) => (
+                                    <blockquote className="border-l-4 border-primary/50 bg-primary/5 px-4 py-3 my-6 rounded-r-lg text-foreground/80 italic">{children}</blockquote>
+                                ),
+                                code: ({ className, children, ...props }) => {
+                                    const isInline = !className;
+                                    if (isInline) {
+                                        return (
+                                            <code className="bg-muted text-primary px-1.5 py-0.5 rounded text-[13px] font-mono font-medium" {...props}>
+                                                {children}
+                                            </code>
+                                        );
+                                    }
+                                    return (
+                                        <code className={`block bg-slate-950 text-green-400 p-5 rounded-lg text-sm font-mono leading-6 overflow-x-auto my-6 border border-border/50 ${className}`} {...props}>
+                                            {children}
+                                        </code>
+                                    );
+                                },
+                                pre: ({ children }) => (
+                                    <pre className="my-6 rounded-lg overflow-hidden">{children}</pre>
+                                ),
+                                table: ({ children }) => (
+                                    <div className="overflow-x-auto my-6 rounded-lg border border-border">
+                                        <table className="w-full text-sm">{children}</table>
+                                    </div>
+                                ),
+                                thead: ({ children }) => (
+                                    <thead className="bg-muted/70 text-foreground font-semibold">{children}</thead>
+                                ),
+                                th: ({ children }) => (
+                                    <th className="px-4 py-3 text-left border-b border-border font-semibold text-sm">{children}</th>
+                                ),
+                                td: ({ children }) => (
+                                    <td className="px-4 py-3 border-b border-border/50 text-foreground/80">{children}</td>
+                                ),
+                                hr: () => (
+                                    <hr className="my-8 border-border" />
+                                ),
+                                strong: ({ children }) => (
+                                    <strong className="font-bold text-foreground">{children}</strong>
+                                ),
+                                a: ({ href, children }) => (
+                                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                                        {children}
+                                    </a>
+                                ),
+                            }}
+                        >
+                            {lesson.content}
+                        </ReactMarkdown>
+                    </div>
                 </CardContent>
             </Card>
 
             {/* Navigation & Complete */}
-            <div className="flex items-center justify-between border-t pt-6">
+            <div className="flex items-center justify-between border-t pt-8">
                 <Button
                     variant="outline"
                     onClick={() => navigateTo(lesson.previousLessonId)}
@@ -171,7 +265,7 @@ export default function LessonPage() {
                         <Button
                             onClick={handleComplete}
                             disabled={completing}
-                            className="gap-2"
+                            className="gap-2 shadow-lg shadow-primary/20"
                         >
                             <CheckCircle className="h-4 w-4" />
                             {completing ? "Completing..." : "Mark as Complete"}

@@ -150,38 +150,65 @@ export const submitChallenge = async (req: Request, res: Response, next: NextFun
     }
 };
 
-// Simple code evaluation (placeholder - in production use sandboxed execution)
+// Code evaluation — validates submitted code against challenge requirements
 function evaluateCode(code: string, challengeTitle: string): boolean {
-    const codeClean = code.toLowerCase().trim();
+    if (!code || typeof code !== 'string') return false;
 
-    // Check for minimum code length and basic structure
-    if (code.length < 10) return false;
+    const codeClean = code.trim();
+    const codeLower = codeClean.toLowerCase();
 
-    // Title-based checks
+    // Reject empty or trivially short submissions
+    if (codeClean.length < 10) return false;
+
+    // Reject submissions that are just random characters or no code structure
+    const hasCodeStructure = /[;{}()=]/.test(codeClean) || /<\w+/.test(codeClean);
+    if (!hasCodeStructure) return false;
+
+    // Title-based validation — each challenge type requires specific syntax
     if (challengeTitle.includes('Variable')) {
-        return codeClean.includes('let') || codeClean.includes('const') || codeClean.includes('var');
+        const hasDeclaration = codeLower.includes('let ') || codeLower.includes('const ') || codeLower.includes('var ');
+        const hasAssignment = codeClean.includes('=');
+        return hasDeclaration && hasAssignment;
     }
     if (challengeTitle.includes('Function')) {
-        return codeClean.includes('function') || codeClean.includes('=>');
+        const hasFunction = codeLower.includes('function ') || codeClean.includes('=>');
+        const hasParens = codeClean.includes('(') && codeClean.includes(')');
+        const hasBody = codeClean.includes('{') && codeClean.includes('}');
+        return hasFunction && hasParens && hasBody;
     }
     if (challengeTitle.includes('Loop')) {
-        return codeClean.includes('for') || codeClean.includes('while');
+        const hasLoop = codeLower.includes('for') || codeLower.includes('while');
+        const hasParens = codeClean.includes('(') && codeClean.includes(')');
+        const hasBody = codeClean.includes('{') && codeClean.includes('}');
+        return hasLoop && hasParens && hasBody;
     }
     if (challengeTitle.includes('Array')) {
-        return codeClean.includes('[') && codeClean.includes(']');
+        const hasBrackets = codeClean.includes('[') && codeClean.includes(']');
+        const hasDeclaration = codeLower.includes('let ') || codeLower.includes('const ') || codeLower.includes('var ');
+        return hasBrackets && hasDeclaration;
     }
     if (challengeTitle.includes('Object')) {
-        return codeClean.includes('{') && codeClean.includes(':');
+        const hasBraces = codeClean.includes('{') && codeClean.includes('}');
+        const hasColon = codeClean.includes(':');
+        const hasDeclaration = codeLower.includes('let ') || codeLower.includes('const ') || codeLower.includes('var ');
+        return hasBraces && hasColon && hasDeclaration;
     }
     if (challengeTitle.includes('HTML')) {
-        return codeClean.includes('<') && codeClean.includes('>');
+        const hasOpenTag = /<\w+/.test(codeClean);
+        const hasCloseTag = /<\/\w+>/.test(codeClean) || /\/>/.test(codeClean);
+        return hasOpenTag && hasCloseTag;
     }
     if (challengeTitle.includes('CSS')) {
-        return codeClean.includes('{') && (codeClean.includes(':') || codeClean.includes(';'));
+        const hasSelector = /[\w.#]\s*\{/.test(codeClean);
+        const hasProperty = /:\s*.+;/.test(codeClean);
+        return hasSelector && hasProperty;
+    }
+    if (challengeTitle.includes('Conditional') || challengeTitle.includes('If')) {
+        return codeLower.includes('if') && codeClean.includes('(') && codeClean.includes('{');
     }
 
-    // Default: pass if code has reasonable content
-    return code.length > 20;
+    // Default: require minimum length + code-like structure
+    return codeClean.length >= 30 && hasCodeStructure;
 }
 
 export const getDailyQuest = async (req: Request, res: Response, next: NextFunction) => {

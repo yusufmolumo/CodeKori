@@ -176,7 +176,9 @@ export function Header() {
                     >
                         <Bell className="h-5 w-5" />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background animate-pulse" />
+                            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 border-2 border-background">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
                         )}
                     </Button>
 

@@ -162,23 +162,32 @@ export const submitTask = async (req: Request, res: Response, next: NextFunction
 function evaluateAnswer(answer: any, taskData: any): boolean {
     if (!answer || !taskData) return false;
 
-    // For multiple-choice tasks
+    const answerStr = String(answer).trim();
+
+    // Reject empty answers
+    if (answerStr.length === 0) return false;
+
+    // For multiple-choice tasks (A, B, C, D)
+    if (taskData.correctOption !== undefined) {
+        return answerStr === String(taskData.correctOption);
+    }
+
+    // For multiple-choice with correctAnswer field
     if (taskData.correctAnswer !== undefined) {
-        return String(answer).trim().toLowerCase() === String(taskData.correctAnswer).trim().toLowerCase();
+        return answerStr.toLowerCase() === String(taskData.correctAnswer).trim().toLowerCase();
     }
 
     // For code-based tasks: check if answer contains expected keywords
     if (taskData.expectedKeywords && Array.isArray(taskData.expectedKeywords)) {
-        const answerLower = String(answer).toLowerCase();
+        const answerLower = answerStr.toLowerCase();
+        // Require minimum length for code answers
+        if (answerStr.length < 10) return false;
+        // Must have code-like structure
+        if (!/[;{}()=<>]/.test(answerStr)) return false;
         const matched = taskData.expectedKeywords.filter((kw: string) => answerLower.includes(kw.toLowerCase()));
-        return matched.length >= Math.ceil(taskData.expectedKeywords.length * 0.6);
+        return matched.length >= Math.ceil(taskData.expectedKeywords.length * 0.7);
     }
 
-    // For decision-based tasks
-    if (taskData.correctOption !== undefined) {
-        return String(answer) === String(taskData.correctOption);
-    }
-
-    // Default: generous pass for non-empty substantive answers
-    return String(answer).trim().length > 20;
+    // Default: no correct answer defined means we can't validate — fail
+    return false;
 }

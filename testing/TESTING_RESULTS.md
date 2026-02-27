@@ -69,7 +69,7 @@ This document summarizes the testing performed on CodeKori across multiple testi
 | 14 | Mentorship | Request a mentor | Request sent | As expected | ✅ Pass |
 | 15 | Theme | Switch Dark → Light | Theme changes | As expected | ✅ Pass |
 | 16 | Notifications | Click bell icon | Dropdown shows alerts | As expected | ✅ Pass |
-| 17 | Search | Search for "HTML" | Course results appear | As expected | ✅ Pass |
+| 17 | Search | Search for "Introduction" | Course results appear | As expected | ✅ Pass |
 | 18 | Profile | Edit name + save | Profile updated | As expected | ✅ Pass |
 
 **Screenshots**: See `screenshots/11–23` for visual evidence.
@@ -92,14 +92,14 @@ This document summarizes the testing performed on CodeKori across multiple testi
 
 ### 5.1 Lighthouse Audit
 - **Screenshot**: ![Lighthouse](./screenshots/29_lighthouse_report.png)
-- **Results**: *(Fill in your actual scores after running Lighthouse)*
+- **Results**: *(70)*
 
 | Metric | Score |
 |--------|-------|
-| Performance | __/100 |
-| Accessibility | __/100 |
-| Best Practices | __/100 |
-| SEO | __/100 |
+| Performance | 70/100 |
+| Accessibility | 84/100 |
+| Best Practices | 96/100 |
+| SEO | 100/100 |
 
 ### 5.2 API Response Times
 - **Screenshot**: ![Network](./screenshots/30_network_response_times.png)
@@ -112,8 +112,8 @@ This document summarizes the testing performed on CodeKori across multiple testi
 
 | Component | Platform | URL | Status |
 |-----------|----------|-----|--------|
-| Frontend | Vercel | *(your Vercel URL)* | ✅ Live |
-| Backend API | Render | *(your Render URL)* | ✅ Live |
+| Frontend | Vercel | *(https://codekori.vercel.app/)* | ✅ Live |
+| Backend API | Render | *(https://codekori-api.onrender.com)* | ✅ Live |
 | Database | CockroachDB Cloud | Serverless cluster | ✅ Connected |
 | Media Storage | Cloudinary | CDN | ✅ Working |
 
