@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, X, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Assume missing but simple enough to skip or mock
-// I'll use a simple div with overflow-auto for now to avoid dependency issues if ScrollArea isn't setup.
 
 interface Message {
     senderId: string;
