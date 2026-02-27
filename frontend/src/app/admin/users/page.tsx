@@ -2,30 +2,9 @@
 
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"; // Need to check if I have Table component, if not I'll just use simple HTML table or create it.
-// I haven't created ui/table.tsx yet. I should create it first or use a raw table.
-// To keep "Premium Design", I should create the Table component.
-// But to save steps, I'll inline the styles for now, then refactor if time permits.
-// Actually, I can just use a standard Tailwind table.
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, UserCog, MoreHorizontal } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Uh oh, missing Dropdown too.
-// I'll stick to simple buttons for actions to avoid dependency hell for now.
+import { Loader2, Shield, UserCog } from "lucide-react";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<any[]>([]);
