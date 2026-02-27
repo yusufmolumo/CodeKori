@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getForumCategories, createPost, getPost, getPosts, addComment, toggleVote } from '../controllers/forumController';
+import { getForumCategories, createPost, getPost, getPosts, addComment, toggleVote, deletePost } from '../controllers/forumController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -8,6 +8,7 @@ router.get('/categories', getForumCategories);
 router.get('/posts', getPosts);
 router.post('/posts', authenticate, createPost);
 router.get('/posts/:id', getPost);
+router.delete('/posts/:id', authenticate, deletePost);
 router.post('/posts/:postId/comments', authenticate, addComment);
 router.post('/vote', authenticate, toggleVote);
 

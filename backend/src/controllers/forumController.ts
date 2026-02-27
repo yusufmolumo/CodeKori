@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/prisma';
+import { sendBulkNotificationEmail } from '../services/emailService';
 
 export const getForumCategories = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -19,7 +20,7 @@ export const getPosts = async (req: Request, res: Response, next: NextFunction) 
     try {
         const posts = await prisma.forumPost.findMany({
             include: {
-                author: { select: { profile: { select: { username: true, avatarUrl: true } } } },
+                author: { select: { role: true, profile: { select: { username: true, fullName: true, avatarUrl: true } } } },
                 category: { select: { name: true } },
                 _count: { select: { comments: true } }
             },
@@ -39,17 +40,38 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
 
         if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
 
-        const post = await prisma.forumPost.create({
-            data: {
-                title,
-                content,
-                categoryId,
-                authorId: userId,
-                tags: tags || []
-            }
-        });
+        if (!title || !content) {
+            return res.status(400).json({ error: { message: 'Title and content are required' } });
+        }
 
-        // Create notifications for other users (notify up to 20 recent users for performance in MVP)
+        // Build create data - categoryId is optional in the request
+        const createData: any = {
+            title,
+            content,
+            authorId: userId,
+            tags: tags || []
+        };
+
+        // Only add categoryId if it's a valid non-empty string
+        if (categoryId && categoryId.trim() !== '') {
+            createData.categoryId = categoryId;
+        } else {
+            // Find or use the first available category
+            const defaultCategory = await prisma.forumCategory.findFirst();
+            if (defaultCategory) {
+                createData.categoryId = defaultCategory.id;
+            } else {
+                // Create a default category if none exists
+                const newCategory = await prisma.forumCategory.create({
+                    data: { name: 'General', description: 'General discussion' }
+                });
+                createData.categoryId = newCategory.id;
+            }
+        }
+
+        const post = await prisma.forumPost.create({ data: createData });
+
+        // Create notifications for other users (non-blocking)
         try {
             const recentUsers = await prisma.user.findMany({
                 where: { id: { not: userId } },
@@ -68,18 +90,30 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
                     }))
                 });
             }
+
+            // Send emails
+            if (recentUsers.length > 0) {
+                const userIds = recentUsers.map(u => u.id);
+                sendBulkNotificationEmail(userIds, 'New Community Post', `<p>A new post was shared in the CodeKori community: <strong>${title.substring(0, 50)}</strong></p><p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/community/${post.id}" style="color:#8b5cf6;">View Post →</a></p>`);
+            }
         } catch (nError) {
             console.error("Failed to create post notifications", nError);
         }
 
-        // Award XP (5 XP for posting)
-        await prisma.userGamification.update({
-            where: { userId },
-            data: { totalXp: { increment: 5 } }
-        });
+        // Award XP (non-blocking)
+        try {
+            await prisma.userGamification.upsert({
+                where: { userId },
+                update: { totalXp: { increment: 5 } },
+                create: { userId, totalXp: 5 }
+            });
+        } catch (xpError) {
+            console.error("Failed to award XP for post", xpError);
+        }
 
         res.status(201).json({ data: post });
     } catch (error) {
+        console.error("createPost error:", error);
         next(error);
     }
 };
@@ -90,10 +124,10 @@ export const getPost = async (req: AuthRequest, res: Response, next: NextFunctio
         const post = await prisma.forumPost.findUnique({
             where: { id },
             include: {
-                author: { select: { profile: { select: { username: true, avatarUrl: true } } } },
+                author: { select: { role: true, profile: { select: { username: true, fullName: true, avatarUrl: true } } } },
                 comments: {
                     include: {
-                        author: { select: { profile: { select: { username: true } } } }
+                        author: { select: { role: true, profile: { select: { username: true, fullName: true } } } }
                     },
                     orderBy: { createdAt: 'desc' }
                 }
@@ -131,9 +165,10 @@ export const addComment = async (req: Request, res: Response, next: NextFunction
         });
 
         // Award XP (2 XP for commenting)
-        await prisma.userGamification.update({
+        await prisma.userGamification.upsert({
             where: { userId },
-            data: { totalXp: { increment: 2 } }
+            update: { totalXp: { increment: 2 } },
+            create: { userId, totalXp: 2 }
         });
 
         res.status(201).json({ data: comment });
@@ -210,6 +245,29 @@ export const toggleVote = async (req: Request, res: Response, next: NextFunction
         }
 
         res.json({ message: 'Vote updated' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deletePost = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        const userRole = (req as AuthRequest).user?.role;
+        const { id } = req.params;
+
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const post = await prisma.forumPost.findUnique({ where: { id } });
+        if (!post) return res.status(404).json({ error: { message: 'Post not found' } });
+
+        // Only allow deletion by post author, mentors, or admins
+        if (post.authorId !== userId && userRole !== 'mentor' && userRole !== 'admin') {
+            return res.status(403).json({ error: { message: 'You can only delete your own posts' } });
+        }
+
+        await prisma.forumPost.delete({ where: { id } });
+        res.json({ message: 'Post deleted' });
     } catch (error) {
         next(error);
     }

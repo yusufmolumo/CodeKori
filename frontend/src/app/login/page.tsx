@@ -41,11 +41,14 @@ export default function LoginPage() {
 
         try {
             const response = await api.post("/auth/login", formData);
-            const { accessToken } = response.data;
+            const { accessToken, user } = response.data;
 
-            // Store token
+            // Store token and role
             if (accessToken) {
                 localStorage.setItem("accessToken", accessToken);
+            }
+            if (user?.role) {
+                localStorage.setItem("userRole", user.role);
             }
 
             router.push("/dashboard");

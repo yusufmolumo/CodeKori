@@ -31,6 +31,9 @@ export const getLeaderboard = async (req: Request, res: Response, next: NextFunc
         // Basic weekly leaderboard logic
         // For now, let's just return top users by totalXP as MVP approximation if weekly data isn't fully set
         const leaderboard = await prisma.userGamification.findMany({
+            where: {
+                user: { role: 'learner' }
+            },
             orderBy: { totalXp: 'desc' },
             take: 10,
             include: {

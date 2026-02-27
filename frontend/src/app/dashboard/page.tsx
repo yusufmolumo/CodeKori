@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { Zap, Trophy, Flame, Target } from "lucide-react";
@@ -16,6 +17,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
+    const router = useRouter();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
@@ -23,23 +25,36 @@ export default function DashboardPage() {
     const [dailyQuest, setDailyQuest] = useState<any>(null);
 
     useEffect(() => {
+        // Redirect mentors to their dedicated dashboard
+        const role = localStorage.getItem("userRole");
+        if (role === "mentor") {
+            router.replace("/dashboard/mentor-home");
+            return;
+        }
+
         const fetchData = async () => {
             try {
-                const [statsRes, userRes, enrollmentRes, questRes] = await Promise.all([
+                const [statsRes, userRes, enrollmentRes] = await Promise.all([
                     api.get("/gamification/me"),
                     api.get("/users/profile"),
                     api.get("/courses/enrolled"),
-                    api.get("/challenges/daily-quest")
                 ]);
                 setStats(statsRes.data.data || statsRes.data);
                 setUser(userRes.data.data || userRes.data);
                 setEnrolledCourses(enrollmentRes.data.data || enrollmentRes.data);
-                setDailyQuest(questRes.data.data || questRes.data);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
-            } finally {
-                setLoading(false);
             }
+
+            // Daily quest can fail gracefully (404 if no challenges available)
+            try {
+                const questRes = await api.get("/challenges/daily-quest");
+                setDailyQuest(questRes.data.data || questRes.data);
+            } catch (error) {
+                // No quest available - not critical
+            }
+
+            setLoading(false);
         };
         fetchData();
     }, []);

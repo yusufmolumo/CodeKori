@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, ArrowLeft, Send, MessageSquare, User as UserIcon, Calendar, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Loader2, ArrowLeft, Send, MessageSquare, User as UserIcon, Calendar, ThumbsUp, ThumbsDown, Shield, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Comment {
@@ -13,8 +13,10 @@ interface Comment {
     content: string;
     createdAt: string;
     author: {
+        role?: string;
         profile: {
             username: string;
+            fullName?: string;
             avatarUrl: string;
         };
     };
@@ -28,8 +30,10 @@ interface Post {
     upvotes: number;
     downvotes: number;
     author: {
+        role?: string;
         profile: {
             username: string;
+            fullName?: string;
             avatarUrl: string;
         };
     };
@@ -47,6 +51,8 @@ export default function PostDetailPage() {
     const [commentContent, setCommentContent] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [voting, setVoting] = useState(false);
+    const [userRole, setUserRole] = useState<string>("learner");
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -60,6 +66,8 @@ export default function PostDetailPage() {
             }
         };
         fetchPost();
+        const role = localStorage.getItem("userRole");
+        if (role) setUserRole(role);
     }, [postId]);
 
     const handleVote = async (type: 'upvote' | 'downvote') => {
@@ -132,7 +140,12 @@ export default function PostDetailPage() {
                             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                     <UserIcon className="h-3 w-3" />
-                                    {post.author?.profile?.username || "Anonymous"}
+                                    {post.author?.profile?.fullName || post.author?.profile?.username || "Anonymous"}
+                                    {post.author?.role === "mentor" && (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-500 border border-amber-500/30">
+                                            <Shield className="h-2.5 w-2.5" /> MENTOR
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Calendar className="h-3 w-3" />
@@ -141,13 +154,34 @@ export default function PostDetailPage() {
                                 <Badge variant="secondary">{post.category?.name || "General"}</Badge>
                             </div>
                         </div>
-                        <div className="h-12 w-12 rounded-full overflow-hidden bg-primary/10">
-                            {post.author?.profile?.avatarUrl ? (
-                                <img src={post.author.profile.avatarUrl} alt="avatar" className="h-full w-full object-cover" />
-                            ) : (
-                                <div className="h-full w-full flex items-center justify-center text-primary font-bold">
-                                    {post.author?.profile?.username?.[0]?.toUpperCase() || "U"}
-                                </div>
+                        <div className="flex items-center gap-2">
+                            <div className="h-12 w-12 rounded-full overflow-hidden bg-primary/10">
+                                {post.author?.profile?.avatarUrl ? (
+                                    <img src={post.author.profile.avatarUrl} alt="avatar" className="h-full w-full object-cover" />
+                                ) : (
+                                    <div className="h-full w-full flex items-center justify-center text-primary font-bold">
+                                        {post.author?.profile?.username?.[0]?.toUpperCase() || "U"}
+                                    </div>
+                                )}
+                            </div>
+                            {(userRole === "mentor" || userRole === "admin") && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                                    onClick={async () => {
+                                        if (!confirm("Delete this post?")) return;
+                                        setDeleting(true);
+                                        try {
+                                            await api.delete(`/forum/posts/${post.id}`);
+                                            router.push("/dashboard/community");
+                                        } catch (e) { console.error(e); }
+                                        setDeleting(false);
+                                    }}
+                                    disabled={deleting}
+                                >
+                                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" /> Delete</>}
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -223,7 +257,14 @@ export default function PostDetailPage() {
                                     </div>
                                     <div className="flex-1 space-y-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold">{comment.author?.profile?.username || "Anonymous"}</span>
+                                            <span className="text-sm font-semibold">
+                                                {comment.author?.profile?.fullName || comment.author?.profile?.username || "Anonymous"}
+                                                {comment.author?.role === "mentor" && (
+                                                    <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-500 border border-amber-500/30">
+                                                        <Shield className="h-2 w-2" /> MENTOR
+                                                    </span>
+                                                )}
+                                            </span>
                                             <span className="text-[10px] text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         <p className="text-sm">{comment.content}</p>

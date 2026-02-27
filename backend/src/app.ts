@@ -42,6 +42,8 @@ import challengeRoutes from './routes/challengeRoutes';
 import adminRoutes from './routes/adminRoutes';
 import searchRoutes from './routes/searchRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import skillLabRoutes from './routes/skillLabRoutes';
+import mentorshipRoutes from './routes/mentorshipRoutes';
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -54,6 +56,8 @@ app.use('/api/challenges', challengeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/skill-lab', skillLabRoutes);
+app.use('/api/mentorship', mentorshipRoutes);
 // app.use('/api/users', userRoutes);
 
 // Error Handling

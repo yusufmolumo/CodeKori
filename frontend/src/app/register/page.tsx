@@ -43,6 +43,7 @@ export default function RegisterPage() {
         fullName: "",
         email: "",
         password: "",
+        role: "learner",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -90,6 +91,36 @@ export default function RegisterPage() {
                                 {error}
                             </div>
                         )}
+                        {/* Role Selector */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">I want to join as:</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, role: "learner" })}
+                                    className={`p-3 rounded-lg border-2 text-center transition-all ${formData.role === "learner"
+                                            ? "border-primary bg-primary/10 text-foreground"
+                                            : "border-border hover:border-primary/40 text-muted-foreground"
+                                        }`}
+                                >
+                                    <div className="text-2xl mb-1">🎓</div>
+                                    <div className="font-semibold text-sm">Learner</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">Learn & grow</div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, role: "mentor" })}
+                                    className={`p-3 rounded-lg border-2 text-center transition-all ${formData.role === "mentor"
+                                            ? "border-primary bg-primary/10 text-foreground"
+                                            : "border-border hover:border-primary/40 text-muted-foreground"
+                                        }`}
+                                >
+                                    <div className="text-2xl mb-1">🧑‍🏫</div>
+                                    <div className="font-semibold text-sm">Mentor</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">Guide others</div>
+                                </button>
+                            </div>
+                        </div>
                         <div className="space-y-2">
                             <Input
                                 name="fullName"
@@ -150,9 +181,9 @@ export default function RegisterPage() {
                                             />
                                         </div>
                                         <span className={`text-xs font-medium ${strengthInfo.label === "Weak" ? "text-red-500" :
-                                                strengthInfo.label === "Fair" ? "text-yellow-500" :
-                                                    strengthInfo.label === "Good" ? "text-blue-500" :
-                                                        strengthInfo.label === "Strong" ? "text-green-500" : ""
+                                            strengthInfo.label === "Fair" ? "text-yellow-500" :
+                                                strengthInfo.label === "Good" ? "text-blue-500" :
+                                                    strengthInfo.label === "Strong" ? "text-green-500" : ""
                                             }`}>
                                             {strengthInfo.label}
                                         </span>

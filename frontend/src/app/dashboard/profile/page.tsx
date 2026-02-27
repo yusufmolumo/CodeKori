@@ -5,7 +5,7 @@ import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, User, Mail, MapPin, Github, Linkedin, Twitter, Save, Camera, ShieldCheck } from "lucide-react";
+import { Loader2, User, Mail, MapPin, Github, Linkedin, Twitter, Save, Camera, ShieldCheck, GraduationCap } from "lucide-react";
 
 interface UserProfile {
     id: string;
@@ -31,6 +31,8 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [role, setRole] = useState<string>("learner");
+    const [mentorStats, setMentorStats] = useState({ menteeCount: 0, coursesCreated: 0 });
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -42,6 +44,9 @@ export default function ProfilePage() {
     });
 
     useEffect(() => {
+        const storedRole = localStorage.getItem("userRole");
+        if (storedRole) setRole(storedRole);
+
         const fetchProfile = async () => {
             try {
                 const res = await api.get("/users/profile");
@@ -62,6 +67,25 @@ export default function ProfilePage() {
             }
         };
         fetchProfile();
+
+        // Fetch mentor-specific stats
+        if (storedRole === "mentor") {
+            const fetchMentorStats = async () => {
+                try {
+                    const [menteesRes, coursesRes] = await Promise.all([
+                        api.get("/mentorship/mentees").catch(() => ({ data: { data: [] } })),
+                        api.get("/courses/my-courses").catch(() => ({ data: { data: [] } }))
+                    ]);
+                    setMentorStats({
+                        menteeCount: menteesRes.data.data?.length || 0,
+                        coursesCreated: coursesRes.data.data?.length || 0,
+                    });
+                } catch (error) {
+                    console.error("Failed to fetch mentor stats", error);
+                }
+            };
+            fetchMentorStats();
+        }
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -75,7 +99,6 @@ export default function ProfilePage() {
         try {
             await api.put("/users/profile", formData);
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
-            // Reflect in local state
             if (user) {
                 setUser({
                     ...user,
@@ -136,19 +159,40 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 w-full mt-6 pt-6 border-t border-primary/10">
-                            <div className="text-center p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/5">
-                                <p className="text-2xl font-black text-primary">{user?.gamification?.totalXp || 0}</p>
-                                <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Total XP</p>
-                            </div>
-                            <div className="text-center p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/5">
-                                <p className="text-2xl font-black text-primary">{user?.gamification?.level || 1}</p>
-                                <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Level</p>
-                            </div>
+                            {role === "mentor" ? (
+                                <>
+                                    <div className="text-center p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/5">
+                                        <p className="text-2xl font-black text-primary">{mentorStats.menteeCount}</p>
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Total Mentees</p>
+                                    </div>
+                                    <div className="text-center p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/5">
+                                        <p className="text-2xl font-black text-primary">{mentorStats.coursesCreated}</p>
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Courses Created</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-center p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/5">
+                                        <p className="text-2xl font-black text-primary">{user?.gamification?.totalXp || 0}</p>
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Total XP</p>
+                                    </div>
+                                    <div className="text-center p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/5">
+                                        <p className="text-2xl font-black text-primary">{user?.gamification?.level || 1}</p>
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Level</p>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
-                        <div className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-semibold py-2 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">
-                            <ShieldCheck className="h-3 w-3" /> Active Learner
-                        </div>
+                        {role === "mentor" ? (
+                            <div className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-semibold py-2 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                <GraduationCap className="h-3 w-3" /> Active Mentor
+                            </div>
+                        ) : (
+                            <div className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-semibold py-2 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">
+                                <ShieldCheck className="h-3 w-3" /> Active Learner
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

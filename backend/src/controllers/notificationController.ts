@@ -51,3 +51,47 @@ export const markAllAsRead = async (req: Request, res: Response, next: NextFunct
         next(error);
     }
 };
+
+// Get notification preferences
+export const getPreferences = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        let prefs = await prisma.notificationPreferences.findUnique({ where: { userId } });
+        if (!prefs) {
+            prefs = await prisma.notificationPreferences.create({ data: { userId } });
+        }
+
+        res.json({ data: prefs });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Update notification preferences
+export const updatePreferences = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const { emailEnabled, inAppEnabled } = req.body;
+
+        const prefs = await prisma.notificationPreferences.upsert({
+            where: { userId },
+            update: {
+                ...(typeof emailEnabled === 'boolean' && { emailEnabled }),
+                ...(typeof inAppEnabled === 'boolean' && { inAppEnabled })
+            },
+            create: {
+                userId,
+                emailEnabled: emailEnabled ?? true,
+                inAppEnabled: inAppEnabled ?? true
+            }
+        });
+
+        res.json({ data: prefs });
+    } catch (error) {
+        next(error);
+    }
+};

@@ -8,6 +8,10 @@ export const getChallenges = async (req: Request, res: Response, next: NextFunct
         const userId = (req as AuthRequest).user?.userId;
 
         const challenges = await prisma.codingChallenge.findMany({
+            where: { isPublished: true },
+            include: {
+                author: { select: { profile: { select: { username: true, fullName: true } } } }
+            },
             orderBy: { createdAt: 'asc' }
         });
 
@@ -40,7 +44,10 @@ export const getChallenge = async (req: Request, res: Response, next: NextFuncti
         const challengeId = String(id);
 
         const challenge = await prisma.codingChallenge.findUnique({
-            where: { id: challengeId as string }
+            where: { id: challengeId as string },
+            include: {
+                author: { select: { profile: { select: { username: true, fullName: true } } } }
+            }
         });
 
         if (!challenge) {
@@ -102,7 +109,6 @@ export const submitChallenge = async (req: Request, res: Response, next: NextFun
         });
 
         // Simple evaluation - check if code contains expected patterns
-        // In production, use sandboxed code execution
         const passed = evaluateCode(code, challenge.title);
         const score = passed ? 100 : 0;
 
@@ -185,7 +191,8 @@ export const getDailyQuest = async (req: Request, res: Response, next: NextFunct
         // Fetch all easy/medium challenges
         const challenges = await prisma.codingChallenge.findMany({
             where: {
-                difficulty: { in: ['EASY', 'MEDIUM'] }
+                difficulty: { in: ['EASY', 'MEDIUM'] },
+                isPublished: true
             }
         });
 
@@ -213,8 +220,11 @@ export const getDailyQuest = async (req: Request, res: Response, next: NextFunct
     }
 };
 
+// ===== MENTOR CRUD =====
+
 export const createChallenge = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = (req as AuthRequest).user?.userId;
         const { title, description, difficulty, starterCode, hints, xpReward } = req.body;
 
         const challenge = await prisma.codingChallenge.create({
@@ -224,11 +234,140 @@ export const createChallenge = async (req: Request, res: Response, next: NextFun
                 difficulty,
                 starterCode,
                 hints: hints || [],
-                xpReward: xpReward || 50
+                xpReward: xpReward || 50,
+                authorId: userId,
+                isPublished: false
             }
         });
 
         res.status(201).json({ data: challenge });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getMyChallenges = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const challenges = await prisma.codingChallenge.findMany({
+            where: { authorId: userId },
+            include: {
+                _count: { select: { submissions: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Get pass/fail stats for each
+        const challengesWithStats = await Promise.all(challenges.map(async (c) => {
+            const passCount = await prisma.challengeSubmission.count({
+                where: { challengeId: c.id, passed: true }
+            });
+            const failCount = await prisma.challengeSubmission.count({
+                where: { challengeId: c.id, passed: false }
+            });
+            return { ...c, passCount, failCount };
+        }));
+
+        res.json({ data: challengesWithStats });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateChallenge = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        const { id } = req.params;
+        const { title, description, difficulty, starterCode, hints, xpReward } = req.body;
+
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const challenge = await prisma.codingChallenge.findUnique({ where: { id } });
+        if (!challenge) return res.status(404).json({ error: { message: 'Challenge not found' } });
+        if (challenge.authorId !== userId) return res.status(403).json({ error: { message: 'Not your challenge' } });
+
+        const updated = await prisma.codingChallenge.update({
+            where: { id },
+            data: {
+                title: title ?? challenge.title,
+                description: description ?? challenge.description,
+                difficulty: difficulty ?? challenge.difficulty,
+                starterCode: starterCode !== undefined ? starterCode : challenge.starterCode,
+                hints: hints ?? challenge.hints,
+                xpReward: xpReward ? Number(xpReward) : challenge.xpReward,
+            }
+        });
+
+        res.json({ data: updated });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteChallenge = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        const { id } = req.params;
+
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const challenge = await prisma.codingChallenge.findUnique({ where: { id } });
+        if (!challenge) return res.status(404).json({ error: { message: 'Challenge not found' } });
+        if (challenge.authorId !== userId) return res.status(403).json({ error: { message: 'Not your challenge' } });
+
+        await prisma.codingChallenge.delete({ where: { id } });
+        res.json({ message: 'Challenge deleted' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const publishChallenge = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        const { id } = req.params;
+
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const challenge = await prisma.codingChallenge.findUnique({ where: { id } });
+        if (!challenge) return res.status(404).json({ error: { message: 'Challenge not found' } });
+        if (challenge.authorId !== userId) return res.status(403).json({ error: { message: 'Not your challenge' } });
+
+        const updated = await prisma.codingChallenge.update({
+            where: { id },
+            data: { isPublished: true }
+        });
+
+        res.json({ data: updated });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getChallengeSubmitters = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        const { id } = req.params;
+
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        const challenge = await prisma.codingChallenge.findUnique({ where: { id } });
+        if (!challenge || challenge.authorId !== userId) {
+            return res.status(403).json({ error: { message: 'Not your challenge' } });
+        }
+
+        const submissions = await prisma.challengeSubmission.findMany({
+            where: { challengeId: id },
+            include: {
+                user: { select: { profile: { select: { username: true, fullName: true } } } }
+            },
+            orderBy: { submittedAt: 'desc' },
+            distinct: ['userId']
+        });
+
+        res.json({ data: submissions });
     } catch (error) {
         next(error);
     }

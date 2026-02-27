@@ -14,16 +14,28 @@ import {
     LogOut,
     Menu,
     X,
-    MessageSquare
+    MessageSquare,
+    Gamepad2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
 
-const sidebarItems = [
+const learnerItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: BookOpen, label: "Courses", href: "/dashboard/courses" },
     { icon: Code2, label: "Challenges", href: "/dashboard/challenges" },
+    { icon: Gamepad2, label: "Skill Lab", href: "/dashboard/skill-lab" },
     { icon: Trophy, label: "Leaderboard", href: "/dashboard/leaderboard" },
+    { icon: Users, label: "Community", href: "/dashboard/community" },
+    { icon: MessageSquare, label: "Mentorship", href: "/dashboard/mentorship" },
+    { icon: User, label: "Profile", href: "/dashboard/profile" },
+];
+
+const mentorItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+    { icon: BookOpen, label: "Courses", href: "/dashboard/mentor-courses" },
+    { icon: Code2, label: "Challenges", href: "/dashboard/mentor-challenges" },
     { icon: Users, label: "Community", href: "/dashboard/community" },
     { icon: MessageSquare, label: "Mentorship", href: "/dashboard/mentorship" },
     { icon: User, label: "Profile", href: "/dashboard/profile" },
@@ -32,6 +44,29 @@ const sidebarItems = [
 export function Sidebar() {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
+    const [role, setRole] = useState<string>("learner");
+    const [unreadTotal, setUnreadTotal] = useState(0);
+
+    useEffect(() => {
+        const storedRole = localStorage.getItem("userRole");
+        if (storedRole) setRole(storedRole);
+
+        // Fetch unread chat counts
+        const fetchUnread = async () => {
+            try {
+                const res = await api.get("/mentorship/chat/unread-counts");
+                setUnreadTotal(res.data.data?.total || 0);
+            } catch {
+                // ignore
+            }
+        };
+        fetchUnread();
+        // Poll every 30 seconds
+        const interval = setInterval(fetchUnread, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const sidebarItems = role === "mentor" ? mentorItems : learnerItems;
 
     return (
         <>
@@ -69,11 +104,21 @@ export function Sidebar() {
                         </Link>
                     </div>
 
+                    {/* Role Badge */}
+                    {role === "mentor" && (
+                        <div className="px-6 py-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-500 border border-amber-500/30">
+                                🧑‍🏫 Mentor Mode
+                            </span>
+                        </div>
+                    )}
+
                     {/* Nav Items */}
                     <nav className="flex-1 space-y-1 p-4">
                         {sidebarItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname === item.href;
+                            const isMentorship = item.label === "Mentorship";
 
                             return (
                                 <Link
@@ -89,6 +134,11 @@ export function Sidebar() {
                                 >
                                     <Icon className="h-5 w-5" />
                                     {item.label}
+                                    {isMentorship && unreadTotal > 0 && (
+                                        <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px]">
+                                            {unreadTotal > 99 ? "99+" : unreadTotal}
+                                        </span>
+                                    )}
                                 </Link>
                             );
                         })}
@@ -108,8 +158,8 @@ export function Sidebar() {
                         <button
                             className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
                             onClick={() => {
-                                // Handle Logout
                                 localStorage.removeItem('accessToken');
+                                localStorage.removeItem('userRole');
                                 window.location.href = '/login';
                             }}
                         >
@@ -122,3 +172,4 @@ export function Sidebar() {
         </>
     );
 }
+

@@ -6,9 +6,8 @@ import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, MessageSquare, Plus, User as UserIcon } from "lucide-react";
+import { Loader2, MessageSquare, Plus, User as UserIcon, Trash2, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
 import { Textarea } from "@/components/ui/textarea";
 
 export default function CommunityPage() {
@@ -17,6 +16,8 @@ export default function CommunityPage() {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showNewPost, setShowNewPost] = useState(false);
+    const [userRole, setUserRole] = useState<string>("learner");
+    const [deleting, setDeleting] = useState<string | null>(null);
 
     // New Post Form
     const [title, setTitle] = useState("");
@@ -25,6 +26,9 @@ export default function CommunityPage() {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
+        const role = localStorage.getItem("userRole");
+        if (role) setUserRole(role);
+
         const fetchData = async () => {
             try {
                 const [catRes, postRes] = await Promise.all([
@@ -35,7 +39,6 @@ export default function CommunityPage() {
                 setPosts(postRes.data.data || postRes.data || []);
             } catch (error) {
                 console.error("Failed to fetch community data", error);
-                // Mock data if backend fails for now
                 setCategories([{ id: '1', name: 'General' }, { id: '2', name: 'Help' }]);
             } finally {
                 setLoading(false);
@@ -53,7 +56,7 @@ export default function CommunityPage() {
                 content,
                 categoryId: selectedCategory || categories[0]?.id
             });
-            setPosts([res.data, ...posts]);
+            setPosts([res.data.data, ...posts]);
             setShowNewPost(false);
             setTitle("");
             setContent("");
@@ -63,6 +66,22 @@ export default function CommunityPage() {
             setSubmitting(false);
         }
     };
+
+    const handleDeletePost = async (e: React.MouseEvent, postId: string) => {
+        e.stopPropagation();
+        if (!confirm("Are you sure you want to delete this post?")) return;
+        setDeleting(postId);
+        try {
+            await api.delete(`/forum/posts/${postId}`);
+            setPosts(prev => prev.filter(p => p.id !== postId));
+        } catch (error) {
+            console.error("Failed to delete post", error);
+        } finally {
+            setDeleting(null);
+        }
+    };
+
+    const isMentor = userRole === "mentor" || userRole === "admin";
 
     if (loading) {
         return (
@@ -79,9 +98,16 @@ export default function CommunityPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Community Forum</h1>
                     <p className="text-muted-foreground">Discuss, ask questions, and share knowledge.</p>
                 </div>
-                <Button onClick={() => setShowNewPost(!showNewPost)}>
-                    {showNewPost ? "Cancel" : <><Plus className="mr-2 h-4 w-4" /> New Post</>}
-                </Button>
+                <div className="flex items-center gap-2">
+                    {isMentor && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-500 border border-amber-500/30">
+                            <Shield className="h-3 w-3" /> Moderator
+                        </span>
+                    )}
+                    <Button onClick={() => setShowNewPost(!showNewPost)}>
+                        {showNewPost ? "Cancel" : <><Plus className="mr-2 h-4 w-4" /> New Post</>}
+                    </Button>
+                </div>
             </div>
 
             {showNewPost && (
@@ -127,42 +153,67 @@ export default function CommunityPage() {
             )}
 
             <div className="grid gap-4">
-                {posts.map(post => (
-                    <Card
-                        key={post.id}
-                        className="hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => router.push(`/dashboard/community/${post.id}`)}
-                    >
-                        <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                                <CardTitle className="text-lg">{post.title}</CardTitle>
-                                <Badge variant="secondary">{post.category?.name || "General"}</Badge>
-                            </div>
-                            <CardDescription className="flex items-center gap-2">
-                                <UserIcon className="h-3 w-3" />
-                                <span>{post.author?.profile?.username || "Anonymous"}</span>
-                                <span>•</span>
-                                <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                            <p className="text-sm text-foreground/80 line-clamp-2">{post.content}</p>
-                        </CardContent>
-                        <CardFooter className="pt-0 flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <MessageSquare className="h-3 w-3" />
-                                    <span>{post._count?.comments || 0} comments</span>
+                {posts.map(post => {
+                    const isAuthorMentor = post.author?.role === "mentor";
+                    return (
+                        <Card
+                            key={post.id}
+                            className="hover:bg-muted/50 transition-colors cursor-pointer"
+                            onClick={() => router.push(`/dashboard/community/${post.id}`)}
+                        >
+                            <CardHeader className="pb-2">
+                                <div className="flex justify-between items-start">
+                                    <CardTitle className="text-lg">{post.title}</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">{post.category?.name || "General"}</Badge>
+                                        {isMentor && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                                onClick={(e) => handleDeletePost(e, post.id)}
+                                                disabled={deleting === post.id}
+                                            >
+                                                {deleting === post.id ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Plus className="h-3 w-3 text-green-500" />
-                                    <span>{post.upvotes || 0}</span>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                    <UserIcon className="h-3 w-3" />
+                                    <span>{post.author?.profile?.fullName || post.author?.profile?.username || "Anonymous"}</span>
+                                    {isAuthorMentor && (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-500 border border-amber-500/30">
+                                            <Shield className="h-2.5 w-2.5" /> MENTOR
+                                        </span>
+                                    )}
+                                    <span>•</span>
+                                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                                 </div>
-                            </div>
-                            <Button variant="ghost" size="sm" className="text-xs h-7">Read More</Button>
-                        </CardFooter>
-                    </Card>
-                ))}
+                            </CardHeader>
+                            <CardContent className="pb-2">
+                                <p className="text-sm text-foreground/80 line-clamp-2">{post.content}</p>
+                            </CardContent>
+                            <CardFooter className="pt-0 flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                        <MessageSquare className="h-3 w-3" />
+                                        <span>{post._count?.comments || 0} comments</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                        <Plus className="h-3 w-3 text-green-500" />
+                                        <span>{post.upvotes || 0}</span>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="sm" className="text-xs h-7">Read More</Button>
+                            </CardFooter>
+                        </Card>
+                    );
+                })}
 
                 {posts.length === 0 && (
                     <div className="text-center py-12 text-muted-foreground">

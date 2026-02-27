@@ -1,11 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { UserCircle, Bell, MessageSquare, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { UserCircle, Bell, MessageSquare, Search, X } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export function Header() {
     const [user, setUser] = useState<{ profile?: { fullName: string; avatarUrl: string | null } } | null>(null);
@@ -14,7 +15,52 @@ export function Header() {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<any>(null);
     const [showSearch, setShowSearch] = useState(false);
+    const [inAppEnabled, setInAppEnabled] = useState(true);
     const router = useRouter();
+    const notificationRef = useRef<HTMLDivElement>(null);
+    const lastSeenIdsRef = useRef<Set<string>>(new Set());
+
+    // Click outside to close notification popup
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+                setShowNotifications(false);
+            }
+        };
+        if (showNotifications) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showNotifications]);
+
+    const fetchNotifications = useCallback(async (isInitial: boolean = false) => {
+        try {
+            const res = await api.get('/notifications');
+            const fetched = res.data.data || [];
+            setNotifications(fetched);
+
+            // Show toast for genuinely new unread notifications
+            if (!isInitial && inAppEnabled) {
+                const newUnread = fetched.filter(
+                    (n: any) => !n.read && !lastSeenIdsRef.current.has(n.id)
+                );
+                newUnread.forEach((n: any) => {
+                    toast(n.title, {
+                        description: n.content,
+                        action: n.link ? {
+                            label: "View",
+                            onClick: () => router.push(n.link),
+                        } : undefined,
+                    });
+                });
+            }
+
+            // Update seen set
+            lastSeenIdsRef.current = new Set(fetched.map((n: any) => n.id));
+        } catch (error) {
+            console.error("Failed to fetch notifications", error);
+        }
+    }, [inAppEnabled, router]);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -25,17 +71,22 @@ export function Header() {
                 console.error("Failed to fetch user for header", error);
             }
         };
-        const fetchNotifications = async () => {
+        // Load notification preferences
+        const fetchPrefs = async () => {
             try {
-                const res = await api.get('/notifications');
-                setNotifications(res.data.data || []);
-            } catch (error) {
-                console.error("Failed to fetch notifications", error);
-            }
+                const res = await api.get('/notification-preferences');
+                setInAppEnabled(res.data.data?.inAppEnabled !== false);
+            } catch { /* default enabled */ }
         };
+
         fetchUser();
-        fetchNotifications();
-    }, []);
+        fetchPrefs();
+        fetchNotifications(true);
+
+        // Poll every 30s
+        const interval = setInterval(() => fetchNotifications(false), 30000);
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
 
     const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const q = e.target.value;
@@ -116,7 +167,7 @@ export function Header() {
             </div>
 
             <div className="flex items-center gap-4">
-                <div className="relative">
+                <div className="relative" ref={notificationRef}>
                     <Button
                         variant="ghost"
                         size="icon"
@@ -133,7 +184,15 @@ export function Header() {
                         <div className="absolute right-0 mt-2 w-80 bg-background border rounded-lg shadow-xl z-50 overflow-hidden">
                             <div className="p-3 border-b flex justify-between items-center">
                                 <h4 className="font-bold text-sm">Notifications</h4>
-                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{unreadCount} New</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{unreadCount} New</span>
+                                    <button
+                                        onClick={() => setShowNotifications(false)}
+                                        className="p-0.5 rounded hover:bg-muted transition-colors"
+                                    >
+                                        <X className="h-4 w-4 text-muted-foreground" />
+                                    </button>
+                                </div>
                             </div>
                             <div className="max-h-64 overflow-y-auto">
                                 {notifications.length > 0 ? (

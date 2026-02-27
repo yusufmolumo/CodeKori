@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register, verifyEmail, login, forgotPassword, resetPassword } from '../controllers/authController';
+import { register, verifyEmail, login, forgotPassword, resetPassword, changePassword } from '../controllers/authController';
+import { authenticate } from '../middleware/auth';
 // import { validateRegister, validateLogin } from '../middleware/validation'; // To implement
 
 const router = Router();
@@ -9,5 +10,6 @@ router.post('/verify-email', verifyEmail);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+router.put('/change-password', authenticate, changePassword);
 
 export default router;

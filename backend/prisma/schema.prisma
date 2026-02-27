@@ -34,7 +34,10 @@ model User {
   badges               UserBadge[]
   gamification         UserGamification?
   lessonProgress       UserLessonProgress[]
+  gamificationSubs     GamificationSubmission[]
   profile              UserProfile?
+  authoredCourses      Course[]                 @relation("AuthoredCourses")
+  authoredChallenges   CodingChallenge[]        @relation("AuthoredChallenges")
 
   @@index([email])
   @@map("users")
@@ -79,11 +82,15 @@ model Course {
   difficulty    Difficulty?
   durationHours Int?               @map("duration_hours")
   thumbnailUrl  String?            @map("thumbnail_url")
+  authorId      String?            @map("author_id")
+  isPublished   Boolean            @default(false) @map("is_published")
   createdAt     DateTime           @default(now()) @map("created_at")
   updatedAt     DateTime           @updatedAt @map("updated_at")
+  author        User?              @relation("AuthoredCourses", fields: [authorId], references: [id], onDelete: SetNull)
   enrollments   CourseEnrollment[]
   modules       Module[]
 
+  @@index([authorId])
   @@map("courses")
 }
 
@@ -191,9 +198,13 @@ model CodingChallenge {
   starterCode String?               @map("starter_code")
   hints       String[]
   xpReward    Int                   @default(50) @map("xp_reward")
+  authorId    String?               @map("author_id")
+  isPublished Boolean               @default(false) @map("is_published")
   createdAt   DateTime              @default(now()) @map("created_at")
+  author      User?                 @relation("AuthoredChallenges", fields: [authorId], references: [id], onDelete: SetNull)
   submissions ChallengeSubmission[]
 
+  @@index([authorId])
   @@map("coding_challenges")
 }
 
@@ -355,6 +366,50 @@ model NotificationPreferences {
   user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+model GamificationMode {
+  id          String             @id @default(uuid())
+  slug        String             @unique
+  title       String
+  description String
+  icon        String
+  orderIndex  Int                @map("order_index")
+  tasks       GamificationTask[]
+
+  @@map("gamification_modes")
+}
+
+model GamificationTask {
+  id          String                   @id @default(uuid())
+  modeId      String                   @map("mode_id")
+  title       String
+  description String
+  scenario    String
+  difficulty  ChallengeDifficulty
+  xpReward    Int                      @default(50) @map("xp_reward")
+  taskData    Json                     @map("task_data")
+  orderIndex  Int                      @map("order_index")
+  mode        GamificationMode         @relation(fields: [modeId], references: [id], onDelete: Cascade)
+  submissions GamificationSubmission[]
+
+  @@index([modeId])
+  @@map("gamification_tasks")
+}
+
+model GamificationSubmission {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  taskId    String           @map("task_id")
+  passed    Boolean          @default(false)
+  score     Int              @default(0)
+  response  Json?
+  createdAt DateTime         @default(now()) @map("created_at")
+  task      GamificationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId])
+  @@map("gamification_submissions")
 }
 
 enum Role {
