@@ -72,7 +72,7 @@ export default function SkillLabPage() {
                                         <Icon className="h-6 w-6" />
                                     </div>
                                     <Badge variant="secondary" className="text-xs">
-                                        {mode.completedTasks}/{mode.totalTasks} done
+                                        {mode.slug === 'challenge-arena' ? '📝 Paste Notes' : `${mode.completedTasks}/${mode.totalTasks} done`}
                                     </Badge>
                                 </div>
                                 <CardTitle className="text-lg mt-3">{mode.title}</CardTitle>
