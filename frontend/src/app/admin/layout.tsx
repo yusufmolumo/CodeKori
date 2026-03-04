@@ -26,7 +26,8 @@ export default function AdminLayout({
                 // const { passwordHash, verificationToken, passwordResetToken, ...safeUser } = user;
                 // safeUser likely includes 'role'.
 
-                if (res.data?.role === 'ADMIN') {
+                const role = (res.data?.data?.role || res.data?.role)?.toLowerCase();
+                if (role === 'admin') {
                     setAuthorized(true);
                 } else {
                     // Redirect non-admins

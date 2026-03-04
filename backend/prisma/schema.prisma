@@ -68,9 +68,11 @@ model UserGamification {
   level         Int       @default(1)
   currentStreak Int       @default(0) @map("current_streak")
   longestStreak Int       @default(0) @map("longest_streak")
-  lastLoginDate DateTime? @map("last_login_date")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastLoginDate  DateTime? @map("last_login_date")
+  lastActiveAt   DateTime? @map("last_active_at")
+  totalTimeSpent Int       @default(0) @map("total_time_spent") // In minutes
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_gamification")
 }
@@ -375,6 +377,7 @@ model GamificationMode {
   description String
   icon        String
   orderIndex  Int                @map("order_index")
+  isActive    Boolean            @default(true) @map("is_active")
   tasks       GamificationTask[]
 
   @@map("gamification_modes")

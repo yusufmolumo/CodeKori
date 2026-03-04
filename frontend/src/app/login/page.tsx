@@ -59,7 +59,11 @@ function LoginForm() {
                 localStorage.setItem("userRole", user.role);
             }
 
-            router.push("/dashboard");
+            if (user?.role === 'admin') {
+                router.push("/admin");
+            } else {
+                router.push("/dashboard");
+            }
         } catch (err: any) {
             setError(err.response?.data?.error?.message || "Invalid credentials");
         } finally {

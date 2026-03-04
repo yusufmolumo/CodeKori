@@ -23,7 +23,8 @@ const adminSidebarItems = [
     { icon: Users, label: "Users", href: "/admin/users" },
     { icon: BookOpen, label: "Courses", href: "/admin/courses" },
     { icon: Code, label: "Challenges", href: "/admin/challenges" },
-    { icon: Settings, label: "Settings", href: "/admin/settings" },
+    { icon: LayoutDashboard, label: "Skill Lab", href: "/admin/skill-lab" },
+    { icon: Settings, label: "Settings", href: "/dashboard/settings" },
 ];
 
 export function AdminSidebar() {

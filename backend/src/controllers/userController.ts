@@ -76,3 +76,27 @@ export const getMentors = async (req: Request, res: Response, next: NextFunction
         next(error);
     }
 };
+
+export const recordHeartbeat = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as AuthRequest).user?.userId;
+        if (!userId) return res.status(401).json({ error: { message: 'Unauthorized' } });
+
+        await prisma.userGamification.upsert({
+            where: { userId },
+            update: {
+                lastActiveAt: new Date(),
+                totalTimeSpent: { increment: 1 } // increment by 1 minute
+            },
+            create: {
+                userId,
+                lastActiveAt: new Date(),
+                totalTimeSpent: 1
+            }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+};

@@ -41,6 +41,16 @@ const mentorItems = [
     { icon: User, label: "Profile", href: "/dashboard/profile" },
 ];
 
+const adminItems = [
+    { icon: LayoutDashboard, label: "Admin Panel", href: "/admin" },
+    { icon: Users, label: "Manage Users", href: "/admin/users" },
+    { icon: Gamepad2, label: "Toggle Skill Labs", href: "/admin/skill-lab" },
+    { icon: BookOpen, label: "Create Courses", href: "/dashboard/mentor-courses" },
+    { icon: Code2, label: "Create Challenges", href: "/dashboard/mentor-challenges" },
+    { icon: Users, label: "Community Monitor", href: "/dashboard/community" },
+    { icon: Trophy, label: "Leaderboard", href: "/dashboard/leaderboard" },
+];
+
 export function Sidebar() {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
@@ -60,13 +70,31 @@ export function Sidebar() {
                 // ignore
             }
         };
+
+        // Send active session heartbeat
+        const sendHeartbeat = async () => {
+            try {
+                await api.patch("/users/heartbeat");
+            } catch {
+                // ignore
+            }
+        };
+
         fetchUnread();
-        // Poll every 30 seconds
-        const interval = setInterval(fetchUnread, 30000);
-        return () => clearInterval(interval);
+        sendHeartbeat();
+
+        // Poll every 30 seconds for messages
+        const unreadInterval = setInterval(fetchUnread, 30000);
+        // Ping heartbeat every 1 minute
+        const heartbeatInterval = setInterval(sendHeartbeat, 60000);
+
+        return () => {
+            clearInterval(unreadInterval);
+            clearInterval(heartbeatInterval);
+        };
     }, []);
 
-    const sidebarItems = role === "mentor" ? mentorItems : learnerItems;
+    const sidebarItems = role === "admin" ? adminItems : role === "mentor" ? mentorItems : learnerItems;
 
     return (
         <>

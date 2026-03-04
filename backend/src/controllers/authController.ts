@@ -112,11 +112,16 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
         setRefreshTokenCookie(res, refreshToken, rememberMe);
 
-        // Update last login
-        await prisma.userGamification.update({
-            where: { userId: user.id },
-            data: { lastLoginDate: new Date() }
-        });
+        // Update last login (use upsert to prevent errors for seeded admins without gamification records)
+        try {
+            await prisma.userGamification.upsert({
+                where: { userId: user.id },
+                update: { lastLoginDate: new Date() },
+                create: { userId: user.id, lastLoginDate: new Date() }
+            });
+        } catch (err) {
+            console.error("Failed to update last login for user", user.id, err);
+        }
 
         res.status(200).json({
             message: 'Login successful',

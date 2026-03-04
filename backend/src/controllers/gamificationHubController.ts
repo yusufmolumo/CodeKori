@@ -8,6 +8,7 @@ export const getModes = async (req: Request, res: Response, next: NextFunction) 
         const userId = (req as AuthRequest).user?.userId;
 
         const modes = await prisma.gamificationMode.findMany({
+            where: { isActive: true },
             orderBy: { orderIndex: 'asc' },
             include: {
                 _count: { select: { tasks: true } }
