@@ -182,7 +182,7 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground text-sm">Loading daily quest...</p>
+                                <p className="text-muted-foreground text-sm">No quest available right now. Check back later!</p>
                             </div>
                         )}
                     </CardContent>
