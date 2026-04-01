@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -28,7 +28,7 @@ interface TaskData {
     xpReward: number;
     taskData: any;
     mode: { id: string; title: string; slug: string };
-    userSubmission: { passed: boolean; score: number } | null;
+    userSubmission: { passed: boolean; score: number; response?: { answer?: string; attemptCount?: number } } | null;
     attemptCount: number;
     hintText: string | null;
     correctAnswer: string | null;
@@ -231,6 +231,10 @@ export default function TaskPage() {
                 setAttemptCount(data.attemptCount || 0);
                 if (data.hintText) setHintText(data.hintText);
                 if (data.correctAnswer) setCorrectAnswer(data.correctAnswer);
+                // Pre-fill saved answer if user has a previous submission
+                if (data.userSubmission?.response?.answer) {
+                    setAnswer(data.userSubmission.response.answer);
+                }
             } catch (err) {
                 console.error("Failed to fetch task:", err);
             } finally {

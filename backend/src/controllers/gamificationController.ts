@@ -20,7 +20,14 @@ export const getGamificationStats = async (req: Request, res: Response, next: Ne
             }
         });
 
-        res.json({ data: stats });
+        // Count unique solved challenges
+        const solvedChallenges = await prisma.challengeSubmission.findMany({
+            where: { userId, passed: true },
+            distinct: ['challengeId'],
+            select: { challengeId: true }
+        });
+
+        res.json({ data: { ...stats, challengesWon: solvedChallenges.length } });
     } catch (error) {
         next(error);
     }

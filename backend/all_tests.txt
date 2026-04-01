@@ -1,0 +1,290 @@
+﻿node.exe : PASS tests/
+gamification.test.ts 
+(14.436 s)
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (PASS tests   
+ /gami...t.ts (14.    
+436 s):String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  Gamification Logic
+    calculateXP 
+function
+      ΓêÜ awards 10 
+XP for lesson 
+completion (15 ms)
+      ΓêÜ awards 25 
+XP for easy challenge 
+(1 ms)
+      ΓêÜ awards 35 
+XP for medium 
+challenge
+      ΓêÜ awards 50 
+XP for hard challenge 
+(1 ms)
+      ΓêÜ applies 
+1.5x multiplier for 
+streak bonus
+      ΓêÜ applies 
+streak bonus to hard 
+challenge
+    calculateLevel 
+function
+      ΓêÜ starts at 
+level 1 with 0 XP (2 
+ms)
+      ΓêÜ remains at 
+level 1 with 99 XP (1 
+ms)
+      ΓêÜ reaches 
+level 2 at 100 XP (1 
+ms)
+      ΓêÜ reaches 
+level 5 at 400 XP (1 
+ms)
+      ΓêÜ reaches 
+level 11 at 1000 XP 
+(1 ms)
+    checkBadgeUnlock 
+function
+      ΓêÜ unlocks 
+First Steps badge 
+after first lesson (1 
+ms)
+      ΓêÜ unlocks 
+Challenge Starter 
+badge after first 
+challenge
+      ΓêÜ unlocks 
+Week Warrior badge at 
+7-day streak (1 ms)
+      ΓêÜ unlocks 
+Month Master badge at 
+30-day streak (1 ms)
+      ΓêÜ does not 
+unlock badge if 
+already earned (1 ms)
+      ΓêÜ unlocks Ten 
+Lessons badge at 10 
+lessons (1 ms)
+      ΓêÜ returns 
+null when no badge 
+criteria met (1 ms)
+
+FAIL 
+tests/api.test.ts 
+(22.917 s)
+  API Endpoint Tests
+    GET /health
+      ΓêÜ returns 
+server health status 
+(137 ms)
+    GET /api/courses
+      ΓêÜ returns 
+list of published 
+courses (4501 ms)
+    GET 
+/api/challenges
+      ΓêÜ returns 
+list of published 
+challenges (746 ms)
+      ΓêÜ challenges 
+have required fields 
+(240 ms)
+    Protected Route 
+Access
+      ΓêÜ rejects 
+unauthenticated 
+access to user 
+profile (107 ms)
+      ΓêÜ rejects 
+unauthenticated 
+access to 
+gamification data (5 
+ms)
+      ΓêÜ rejects 
+unauthenticated 
+access to admin panel 
+(7 ms)
+    GET 
+/api/skill-lab/modes
+      ΓêÜ returns 
+list of skill lab 
+modes (463 ms)
+    Admin 
+Authentication Flow
+      ├ù admin can 
+login with correct 
+credentials (1062 ms)
+      ├ù admin can 
+access user 
+management endpoint 
+(565 ms)
+
+  ΓùÅ API Endpoint 
+Tests ΓÇ║ Admin 
+Authentication Flow 
+ΓÇ║ admin can login 
+with correct 
+credentials
+
+    expect(received).t
+oHaveProperty(path)
+
+    Matcher error: 
+received value must 
+not be null nor 
+undefined
+
+    Received has 
+value: undefined
+
+    [0m [90m 93 
+|[39m
+     [90m 94 |[39m  
+           expect(resp
+onse[33m.[39mstatus)
+[33m.[39mtoBe([35m2
+00[39m)[33m;[39m
+    [31m[1m>[22m[3
+9m[90m 95 |[39m     
+        expect(respons
+e[33m.[39mdata[33m.
+[39mdata)[33m.[39mt
+oHaveProperty([32m'ac
+cessToken'[39m)[33m;
+[39m
+     [90m    |[39m  
+                      
+                
+[31m[1m^[22m[39m
+     [90m 96 |[39m  
+       })[33m;[39m
+     [90m 97 |[39m
+     [90m 98 |[39m  
+       
+test([32m'admin can 
+access user 
+management endpoint'[
+39m[33m,[39m 
+[36masync[39m () 
+[33m=>[39m {[0m
+
+      at tests/api.tes
+t.ts:95:40
+      at fulfilled (te
+sts/api.test.ts:5:58)
+
+  ΓùÅ API Endpoint 
+Tests ΓÇ║ Admin 
+Authentication Flow 
+ΓÇ║ admin can access 
+user management 
+endpoint
+
+    TypeError: Cannot 
+read properties of 
+undefined (reading 
+'accessToken')
+
+    [0m [90m 101 
+|[39m                
+ password[33m:[39m 
+[32m'AdminPassword123!
+'[39m
+     [90m 102 |[39m 
+            
+})[33m;[39m
+    [31m[1m>[22m[3
+9m[90m 103 |[39m    
+         
+[36mconst[39m token 
+[33m=[39m loginRes[
+33m.[39mdata[33m.[3
+9mdata[33m.[39macces
+sToken[33m;[39m
+     [90m     |[39m 
+                      
+                      
+ [31m[1m^[22m[39m
+     [90m 104 |[39m
+     [90m 105 |[39m 
+            
+[36mconst[39m 
+response [33m=[39m 
+[36mawait[39m axios
+[33m.[39m[36mget[39
+m([32m`${API}/api/adm
+in/users`[39m[33m,[
+39m {
+     [90m 106 |[39m 
+                
+headers[33m:[39m { 
+[33mAuthorization[39m
+[33m:[39m 
+[32m`Bearer 
+${token}`[39m }[0m
+
+      at tests/api.tes
+t.ts:103:46
+      at fulfilled (te
+sts/api.test.ts:5:58)
+
+PASS 
+tests/auth.test.ts 
+(26.141 s)
+  Auth Endpoints
+    POST 
+/api/auth/register
+      ΓêÜ creates new 
+user with valid 
+credentials (10049 ms)
+      ΓêÜ rejects 
+registration with 
+existing email (579 
+ms)
+    POST 
+/api/auth/login
+      ΓêÜ 
+authenticates user 
+with valid 
+credentials (570 ms)
+      ΓêÜ rejects 
+login with wrong 
+password (297 ms)
+      ΓêÜ rejects 
+login with 
+non-existent email 
+(224 ms)
+
+Test Suites: 1 
+failed, 2 passed, 3 
+total
+Tests:       2 
+failed, 31 passed, 33 
+total
+Snapshots:   0 total
+Time:        29.889 s
+Ran all test suites.
+Force exiting Jest: 
+Have you considered 
+using 
+`--detectOpenHandles` 
+to detect async 
+operations that kept 
+running after all 
+tests finished?

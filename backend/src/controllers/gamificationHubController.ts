@@ -1,4 +1,4 @@
-﻿import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/prisma';
 import { updateUserGamification } from '../services/gamificationService';
@@ -58,6 +58,14 @@ export const getModeTasks = async (req: Request, res: Response, next: NextFuncti
             orderBy: { orderIndex: 'asc' }
         });
 
+        // Deduplicate tasks by orderIndex (prevents duplicates from repeated seeding)
+        const seenOrderIndices = new Set<number>();
+        const uniqueTasks = tasks.filter(task => {
+            if (seenOrderIndices.has(task.orderIndex)) return false;
+            seenOrderIndices.add(task.orderIndex);
+            return true;
+        });
+
         let completedTaskIds: string[] = [];
         if (userId) {
             const submissions = await prisma.gamificationSubmission.findMany({
@@ -67,7 +75,7 @@ export const getModeTasks = async (req: Request, res: Response, next: NextFuncti
             completedTaskIds = submissions.map(s => s.taskId);
         }
 
-        const tasksWithStatus = tasks.map(task => ({
+        const tasksWithStatus = uniqueTasks.map(task => ({
             ...task,
             isCompleted: completedTaskIds.includes(task.id)
         }));
@@ -114,18 +122,32 @@ export const getTask = async (req: Request, res: Response, next: NextFunction) =
         let hintText: string | null = null;
         let correctAnswer: string | null = null;
 
-        if (supportsHints && !submission?.passed) {
-            // After 3 attempts, provide a hint
+        // Always show hints/answers based on attempt count (persists across reloads/signouts)
+        if (supportsHints) {
+            // After 3 attempts, provide a hint — always generate one
             if (attemptCount >= 3) {
                 if (taskData?.expectedKeywords?.length) {
                     hintText = `Think about using: ${taskData.expectedKeywords[0]}`;
                 } else if (taskData?.correctAnswer) {
                     hintText = `The answer is related to: ${String(taskData.correctAnswer).substring(0, 10)}...`;
+                } else if (taskData?.correctOption) {
+                    hintText = `The correct option is one of the choices above.`;
+                } else {
+                    hintText = `Review the scenario carefully and think about common best practices.`;
                 }
             }
-            // After 6 attempts, reveal the answer
+            // After 6 attempts, reveal the exact correct answer — always generate one
             if (attemptCount >= 6) {
-                correctAnswer = taskData?.fullAnswer || taskData?.correctAnswer || null;
+                if (taskData?.fullAnswer) {
+                    correctAnswer = taskData.fullAnswer;
+                } else if (taskData?.correctAnswer) {
+                    correctAnswer = taskData.correctAnswer;
+                } else if (taskData?.expectedKeywords?.length) {
+                    // Return all keywords joined — copying this passes the evaluator
+                    correctAnswer = taskData.expectedKeywords.join(' ');
+                } else if (taskData?.correctOption) {
+                    correctAnswer = taskData.correctOption;
+                }
             }
         }
 
@@ -178,8 +200,9 @@ export const submitTask = async (req: Request, res: Response, next: NextFunction
         const taskData = task.taskData as any;
         const isBugHunter = task.mode?.slug === 'bug-hunter';
         const isAlgorithmArena = task.mode?.slug === 'algorithm-arena';
-        const supportsHints = isBugHunter || isAlgorithmArena;
-        const passed = evaluateAnswer(answer, taskData, isBugHunter || isAlgorithmArena);
+        const isDevSimulator = task.mode?.slug === 'dev-simulator';
+        const supportsHints = isBugHunter || isAlgorithmArena || isDevSimulator;
+        const passed = evaluateAnswer(answer, taskData, isBugHunter || isAlgorithmArena || isDevSimulator);
         const score = passed ? 100 : 0;
 
         const submission = await prisma.gamificationSubmission.upsert({
@@ -194,24 +217,38 @@ export const submitTask = async (req: Request, res: Response, next: NextFunction
             xpEarned = task.xpReward;
         }
 
-        // Build hint/answer info for modes that support it
+        // Build hint/answer info — always based on attempt count (persists across reloads)
         let hintText: string | null = null;
         let correctAnswer: string | null = null;
 
         if (supportsHints && !passed) {
+            // After 3 attempts, provide a hint — always generate one
             if (attemptCount >= 3) {
                 if (taskData?.expectedKeywords?.length) {
                     hintText = `Think about using: ${taskData.expectedKeywords[0]}`;
                 } else if (taskData?.correctAnswer) {
                     hintText = `The answer is related to: ${String(taskData.correctAnswer).substring(0, 10)}...`;
+                } else if (taskData?.correctOption) {
+                    hintText = `The correct option is one of the choices above.`;
+                } else {
+                    hintText = `Review the scenario carefully and think about common best practices.`;
                 }
             }
+            // After 6 attempts, reveal the exact correct answer — always generate one
             if (attemptCount >= 6) {
-                correctAnswer = taskData?.fullAnswer || taskData?.correctAnswer || null;
+                if (taskData?.fullAnswer) {
+                    correctAnswer = taskData.fullAnswer;
+                } else if (taskData?.correctAnswer) {
+                    correctAnswer = taskData.correctAnswer;
+                } else if (taskData?.expectedKeywords?.length) {
+                    correctAnswer = taskData.expectedKeywords.join(' ');
+                } else if (taskData?.correctOption) {
+                    correctAnswer = taskData.correctOption;
+                }
             }
         }
 
-        const modeName = isBugHunter ? 'bug' : 'algorithm';
+        const modeName = isBugHunter ? 'bug' : isDevSimulator ? 'dev' : 'algorithm';
 
         res.json({
             data: {
@@ -222,12 +259,12 @@ export const submitTask = async (req: Request, res: Response, next: NextFunction
                 hintText,
                 correctAnswer,
                 feedback: passed
-                    ? isBugHunter ? 'Correct! Great work! The bug has been squashed!' : 'Correct! Your algorithm works perfectly!'
+                    ? isBugHunter ? 'Correct! Great work! The bug has been squashed!' : isDevSimulator ? 'Correct! Mission complete!' : 'Correct! Your algorithm works perfectly!'
                     : attemptCount >= 6
-                        ? 'Not quite right. Try again!'
+                        ? 'Not quite right. The answer is now available - check above!'
                         : attemptCount >= 3
                             ? 'Not quite right. A hint is now available - check above!'
-                            : isBugHunter ? 'Not quite right. Review the bug report and try again.' : 'Not quite right. Review the problem and try again.'
+                            : isBugHunter ? 'Not quite right. Review the bug report and try again.' : isDevSimulator ? 'Not quite right. Review the scenario and try again.' : 'Not quite right. Review the problem and try again.'
             }
         });
     } catch (error) {
@@ -243,52 +280,59 @@ function evaluateAnswer(answer: any, taskData: any, isBugHunter: boolean = false
     // Reject empty answers
     if (answerStr.length === 0) return false;
 
-    // Accept if user pasted the full correct answer
+    const answerLower = answerStr.toLowerCase();
+    const normalizeCode = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+
+    // Accept if user pasted the full correct answer (exact or contains)
     if (taskData.fullAnswer) {
-        const normalizeCode = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
-        if (normalizeCode(answerStr) === normalizeCode(taskData.fullAnswer)) return true;
-        // Also pass if answer contains all significant lines of the full answer
+        const normalizedFull = normalizeCode(taskData.fullAnswer);
+        const normalizedAnswer = normalizeCode(answerStr);
+        // Exact match
+        if (normalizedAnswer === normalizedFull) return true;
+        // Answer contains the full answer
+        if (normalizedAnswer.includes(normalizedFull)) return true;
+        // Full answer contains the user's answer (for short answers like "i--")
+        if (normalizedFull.includes(normalizedAnswer) && normalizedAnswer.length >= 2) return true;
+        // Check line-by-line matching with 60% threshold
         const fullLines = String(taskData.fullAnswer).split('\n').map((l: string) => l.trim().toLowerCase()).filter((l: string) => l.length > 0);
-        const answerLower = answerStr.toLowerCase();
         const matchedLines = fullLines.filter((line: string) => answerLower.includes(line));
-        if (matchedLines.length >= Math.ceil(fullLines.length * 0.8)) return true;
+        if (fullLines.length > 0 && matchedLines.length >= Math.ceil(fullLines.length * 0.6)) return true;
     }
 
     // For multiple-choice tasks (A, B, C, D)
     if (taskData.correctOption !== undefined) {
-        return answerStr === String(taskData.correctOption);
+        const given = answerStr.toUpperCase().trim();
+        const correct = String(taskData.correctOption).toUpperCase().trim();
+        // Accept "A", "A)", "A.", "Option A", etc.
+        if (given === correct) return true;
+        if (given.startsWith(correct)) return true;
+        if (given.includes(`option ${correct.toLowerCase()}`)) return true;
     }
 
-    // For tasks with exact correct answer (e.g., bug-hunter with correctAnswer)
+    // For tasks with exact correct answer
     if (taskData.correctAnswer !== undefined) {
         const correct = String(taskData.correctAnswer).trim().toLowerCase();
-        const given = answerStr.toLowerCase();
-        // Exact match or contains the correct answer
-        if (given === correct) return true;
-        if (given.includes(correct)) return true;
+        // Exact match or contains
+        if (answerLower === correct) return true;
+        if (answerLower.includes(correct)) return true;
+        // Correct answer contains the user's answer (for short concise answers)
+        if (correct.includes(answerLower) && answerLower.length >= 2) return true;
     }
 
     // For code-based / keyword tasks
     if (taskData.expectedKeywords && Array.isArray(taskData.expectedKeywords)) {
-        const answerLower = answerStr.toLowerCase();
-
-        // For bug-hunter: more lenient â€” check if answer contains at least one keyword
         if (isBugHunter) {
-            // Check if the answer contains the correct fix
             if (taskData.correctAnswer) {
                 const correct = String(taskData.correctAnswer).trim().toLowerCase();
                 if (answerLower.includes(correct)) return true;
             }
-            // Check keywords â€” need at least 50% for bug-hunter
             const matched = taskData.expectedKeywords.filter((kw: string) => answerLower.includes(kw.toLowerCase()));
-            return matched.length >= Math.ceil(taskData.expectedKeywords.length * 0.5);
+            const threshold = Math.max(1, Math.ceil(taskData.expectedKeywords.length * 0.3));
+            return matched.length >= threshold;
         }
-
-        // For non-bug-hunter: stricter
-        if (answerStr.length < 10) return false;
-        if (!/[;{}()=<>]/.test(answerStr)) return false;
         const matched = taskData.expectedKeywords.filter((kw: string) => answerLower.includes(kw.toLowerCase()));
-        return matched.length >= Math.ceil(taskData.expectedKeywords.length * 0.7);
+        const threshold = Math.max(1, Math.ceil(taskData.expectedKeywords.length * 0.5));
+        return matched.length >= threshold;
     }
 
     // Default: fail

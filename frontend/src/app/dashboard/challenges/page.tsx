@@ -103,7 +103,7 @@ export default function ChallengesPage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredChallenges.map((challenge) => (
-                    <Card key={challenge.id} className={`flex flex-col ${challenge.isSolved ? 'border-green-500/50' : ''}`}>
+                    <Card key={challenge.id} className={`flex flex-col transition-all ${challenge.isSolved ? 'border-green-500/50 bg-green-500/5' : ''}`}>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="line-clamp-1">{challenge.title}</CardTitle>
@@ -126,8 +126,8 @@ export default function ChallengesPage() {
                         </CardContent>
                         <CardFooter>
                             <Link href={`/dashboard/challenges/${challenge.id}`} className="w-full">
-                                <Button className="w-full" variant={challenge.isSolved ? "outline" : "default"}>
-                                    {challenge.isSolved ? "View Solution" : "Solve Challenge"}
+                                <Button className={`w-full ${challenge.isSolved ? 'border-green-500/50 text-green-600 hover:bg-green-500/10' : ''}`} variant={challenge.isSolved ? "outline" : "default"}>
+                                    {challenge.isSolved ? "Review Solution" : "Solve Challenge"}
                                 </Button>
                             </Link>
                         </CardFooter>

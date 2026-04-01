@@ -1,6 +1,6 @@
-# CodeKori 🚀
+# CodeKori 
 
-**CodeKori** is a full-stack gamified coding education platform built to empower university students through structured courses, interactive coding challenges, mentorship, and a vibrant community. With XP-based progression, daily streaks, leaderboards, and real-time notifications, CodeKori delivers a premium, engaging learning experience.
+**CodeKori** is a full-stack gamified coding education platform built to empower university students through structured courses, interactive coding challenges, mentorship, and a vibrant community. With XP-based progression, daily streaks, leaderboards, and real-time notifications, CodeKori delivers an engaging learning experience.
 
 - **GitHub Repository**: <a href="https://github.com/yusufmolumo/CodeKori" target="_blank">https://github.com/yusufmolumo/CodeKori</a>
 - **Video Demo**: <a href="https://drive.google.com/file/d/1PPOIajpK0zetM-Vdy-sITlVEEE-Nsk1_/view?usp=sharing" target="_blank">https://drive.google.com/file/d/1PPOIajpK0zetM-Vdy-sITlVEEE-Nsk1_/view?usp=sharing</a>
@@ -11,34 +11,34 @@
 
 ---
 
-## ✨ Features
+## Features
 
-### 📚 Learning & Courses
+### Learning & Courses
 - **Structured Learning Paths** — 30+ lessons across HTML, CSS, and JavaScript with modular course structure.
 - **Lesson Progress Tracking** — Mark lessons as complete, earn XP, and track progress per course.
 - **Course Enrollment** — Enroll in courses and resume where you left off.
 - **Enrollment & Completion Notifications** — Receive email + in-app alerts on enrollment and lesson completion.
 
-### 💻 Coding Challenges
+### Coding Challenges
 - **Interactive Code Editor** — Integrated editor with real-time feedback, hints, and test-case validation.
 - **Difficulty Levels** — Challenges ranging from beginner to advanced.
 - **Code Validation** — Submitted code is validated against test cases; incorrect or empty submissions are flagged as wrong.
 - **Mentor-Created Challenges** — Mentors can create and manage custom challenges for learners.
 
-### 🧪 Skill Lab (Gamification Hub)
+### Skill Lab (Gamification Hub)
 - **Interactive Quizzes** — Multiple-choice questions testing coding knowledge with answer validation.
 - **Code Puzzles** — Hands-on coding exercises with automated correctness checking.
 - **Daily Quests** — Daily challenges that refresh and reward XP for completion.
 - **Answer Validation** — All quiz answers and code submissions are validated before marking as correct.
 - **XP Rewards** — Earn XP for each correctly answered question or solved puzzle.
 
-### 🏆 Gamification & Progression
+### Gamification & Progression
 - **XP System** — Earn XP for completing lessons, challenges, skill lab activities, and community participation.
 - **Leveling** — Automatic level progression based on accumulated XP.
 - **Daily Streaks** — Maintain consecutive day streaks to stay motivated.
 - **Leaderboard** — Compete with fellow learners on a global leaderboard.
 
-### 🤝 Mentorship System
+### Mentorship System
 - **Mentor Discovery** — Learners can browse available mentors and send connection requests.
 - **Request Management** — Mentors can accept or decline mentee requests.
 - **Connected Mentor View** — Learners see their active mentor with a "Connected" badge.
@@ -47,46 +47,13 @@
 - **Unread Message Badges** — Red badges on sidebar and individual chat buttons showing unread message counts.
 - **Mentor Dashboard** — Mentors get mentee stats including courses enrolled, challenges completed, and XP.
 
-### 💬 Community Forum
+### Community Forum
 - **Discussion Board** — Create and browse posts, share solutions, and ask questions.
 - **Categories** — Organized forum categories for different topics.
 - **Comments & Likes** — Engage with posts through comments and reactions.
 - **New Post Notifications** — All users are notified when new posts are shared.
 
-### 🔔 Notification System
-- **Email Notifications** — Real emails sent via Gmail SMTP (NodeMailer) for:
-  - Mentorship requests, accepts, and removals
-  - Chat messages
-  - New community posts
-  - Course enrollment and lesson completion
-- **In-App Toast Popups** — Real-time popup notifications (Sonner) appearing in top-right.
-- **Bell Icon Dropdown** — Notification center in the header with live unread count badge.
-- **Configurable Preferences** — Toggle email and in-app notifications independently in Settings.
-
-### ⚙️ Settings
-- **Notification Preferences** — Toggle email and in-app notifications on/off.
-- **Password Change** — Secure password change with current password verification.
-- **Theme Switching** — Light, Dark, and System theme modes that apply across the entire platform UI.
-
-### 🔍 Global Search
-- **Instant Search** — Find courses and challenges with real-time search results in the header.
-
-### 🛡️ Authentication & Security
-- **JWT Authentication** — Secure access and refresh token system.
-- **Role-Based Access** — Learner, Mentor, and Admin roles with route-level authorization.
-- **Email Verification** — New accounts require email verification before login.
-- **Password Reset** — Email-based password reset flow.
-
-### 👤 User Profiles
-- **Profile Management** — Edit username, full name, bio, and avatar.
-- **Avatar Upload** — Image uploads via Cloudinary.
-
-### 🛠️ Admin Panel
-- **User Management** — Admin-only dashboard for managing platform users and roles.
-
----
-
-## 🎨 Design & Architecture
+## Design & Architecture
 
 Visual designs and architecture diagrams can be found in the `designs/` folder.
 
@@ -97,7 +64,7 @@ Visual designs and architecture diagrams can be found in the `designs/` folder.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
@@ -110,7 +77,7 @@ Visual designs and architecture diagrams can be found in the `designs/` folder.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 codekori/
@@ -161,7 +128,7 @@ codekori/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -240,7 +207,7 @@ codekori/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Comprehensive testing results are documented in [`testing/TESTING_RESULTS.md`](./testing/TESTING_RESULTS.md) with 30 screenshots covering:
 
@@ -260,7 +227,7 @@ Comprehensive testing results are documented in [`testing/TESTING_RESULTS.md`](.
 
 ---
 
-## 🔌 API Overview
+## API Overview
 
 | Module | Endpoints | Description |
 |--------|-----------|-------------|
@@ -279,7 +246,7 @@ Comprehensive testing results are documented in [`testing/TESTING_RESULTS.md`](.
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Production Environment
 
@@ -312,6 +279,6 @@ Comprehensive testing results are documented in [`testing/TESTING_RESULTS.md`](.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.

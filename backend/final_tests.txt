@@ -1,0 +1,179 @@
+﻿node.exe : PASS tests/
+gamification.test.ts 
+(15.197 s)
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (PASS tests   
+ /gami...t.ts (15.    
+197 s):String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  Gamification Logic
+    calculateXP 
+function
+      ΓêÜ awards 10 
+XP for lesson 
+completion (34 ms)
+      ΓêÜ awards 25 
+XP for easy challenge 
+(1 ms)
+      ΓêÜ awards 35 
+XP for medium 
+challenge (2 ms)
+      ΓêÜ awards 50 
+XP for hard challenge 
+(2 ms)
+      ΓêÜ applies 
+1.5x multiplier for 
+streak bonus (2 ms)
+      ΓêÜ applies 
+streak bonus to hard 
+challenge (3 ms)
+    calculateLevel 
+function
+      ΓêÜ starts at 
+level 1 with 0 XP (6 
+ms)
+      ΓêÜ remains at 
+level 1 with 99 XP (4 
+ms)
+      ΓêÜ reaches 
+level 2 at 100 XP (2 
+ms)
+      ΓêÜ reaches 
+level 5 at 400 XP (2 
+ms)
+      ΓêÜ reaches 
+level 11 at 1000 XP 
+(1 ms)
+    checkBadgeUnlock 
+function
+      ΓêÜ unlocks 
+First Steps badge 
+after first lesson (3 
+ms)
+      ΓêÜ unlocks 
+Challenge Starter 
+badge after first 
+challenge
+      ΓêÜ unlocks 
+Week Warrior badge at 
+7-day streak (1 ms)
+      ΓêÜ unlocks 
+Month Master badge at 
+30-day streak (3 ms)
+      ΓêÜ does not 
+unlock badge if 
+already earned (2 ms)
+      ΓêÜ unlocks Ten 
+Lessons badge at 10 
+lessons (1 ms)
+      ΓêÜ returns 
+null when no badge 
+criteria met (1 ms)
+
+PASS 
+tests/api.test.ts 
+(25.102 s)
+  API Endpoint Tests
+    GET /health
+      ΓêÜ returns 
+server health status 
+(217 ms)
+    GET /api/courses
+      ΓêÜ returns 
+list of published 
+courses (3087 ms)
+    GET 
+/api/challenges
+      ΓêÜ returns 
+list of published 
+challenges (678 ms)
+      ΓêÜ challenges 
+have required fields 
+(234 ms)
+    Protected Route 
+Access
+      ΓêÜ rejects 
+unauthenticated 
+access to user 
+profile (113 ms)
+      ΓêÜ rejects 
+unauthenticated 
+access to 
+gamification data (4 
+ms)
+      ΓêÜ rejects 
+unauthenticated 
+access to admin panel 
+(4 ms)
+    GET 
+/api/skill-lab/modes
+      ΓêÜ returns 
+list of skill lab 
+modes (449 ms)
+    Admin 
+Authentication Flow
+      ΓêÜ admin can 
+login with correct 
+credentials (1035 ms)
+      ΓêÜ admin can 
+access user 
+management endpoint 
+(3489 ms)
+
+PASS 
+tests/auth.test.ts 
+(28.398 s)
+  Auth Endpoints
+    POST 
+/api/auth/register
+      ΓêÜ creates new 
+user with valid 
+credentials (11463 ms)
+      ΓêÜ rejects 
+registration with 
+existing email (560 
+ms)
+    POST 
+/api/auth/login
+      ΓêÜ 
+authenticates user 
+with valid 
+credentials (576 ms)
+      ΓêÜ rejects 
+login with wrong 
+password (341 ms)
+      ΓêÜ rejects 
+login with 
+non-existent email 
+(230 ms)
+
+Test Suites: 3 
+passed, 3 total
+Tests:       33 
+passed, 33 total
+Snapshots:   0 total
+Time:        30.337 s
+Ran all test suites.
+Force exiting Jest: 
+Have you considered 
+using 
+`--detectOpenHandles` 
+to detect async 
+operations that kept 
+running after all 
+tests finished?

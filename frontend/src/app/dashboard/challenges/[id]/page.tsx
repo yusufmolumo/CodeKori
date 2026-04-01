@@ -162,11 +162,21 @@ export default function ChallengeDetailPage() {
             </Card>
 
             {/* Code Editor */}
-            <Card>
+            <Card className={`flex flex-col transition-all ${challenge.isSolved ? 'border-green-500/50 bg-green-500/5' : ''}`}>
                 <CardHeader>
-                    <CardTitle className="text-lg">Your Solution</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        Your Solution
+                        {challenge.isSolved && (
+                            <Badge className="bg-green-500 gap-1 text-xs">
+                                <CheckCircle className="h-3 w-3" />
+                                Solved
+                            </Badge>
+                        )}
+                    </CardTitle>
                     <CardDescription>
-                        Write your code below and click Submit when ready
+                        {challenge.isSolved
+                            ? "This challenge has been solved. Your correct solution is shown below."
+                            : "Write your code below and click Submit when ready"}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -175,7 +185,7 @@ export default function ChallengeDetailPage() {
                         onChange={(e) => setCode(e.target.value)}
                         placeholder="Write your code here..."
                         className="font-mono text-sm min-h-[200px] bg-slate-950 text-green-400"
-                        disabled={submitting}
+                        disabled={submitting || challenge.isSolved}
                     />
 
                     <div className="flex items-center justify-between">
@@ -190,11 +200,11 @@ export default function ChallengeDetailPage() {
 
                         <Button
                             onClick={handleSubmit}
-                            disabled={submitting || !code.trim()}
-                            className="gap-2"
+                            disabled={submitting || !code.trim() || challenge.isSolved}
+                            className={`gap-2 ${challenge.isSolved ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <Send className="h-4 w-4" />
-                            {submitting ? "Checking..." : "Submit Solution"}
+                            {submitting ? "Checking..." : challenge.isSolved ? "Already Solved" : "Submit Solution"}
                         </Button>
                     </div>
                 </CardContent>

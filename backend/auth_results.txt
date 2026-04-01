@@ -1,0 +1,178 @@
+﻿node.exe : FAIL 
+tests/auth.test.ts 
+(15.339 s)
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (FAIL tests   
+ /auth.test.ts (15    
+.339 s):String) [    
+], RemoteExceptio    n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  Auth Endpoints
+    POST 
+/api/auth/register
+      ├ù creates new 
+user with valid 
+credentials (8579 ms)
+      ΓêÜ rejects 
+registration with 
+existing email (355 
+ms)
+    POST 
+/api/auth/login
+      ├ù 
+authenticates user 
+with valid 
+credentials (1140 ms)
+      ΓêÜ rejects 
+login with wrong 
+password (325 ms)
+      ΓêÜ rejects 
+login with 
+non-existent email 
+(247 ms)
+
+  ΓùÅ Auth Endpoints 
+ΓÇ║ POST 
+/api/auth/register 
+ΓÇ║ creates new user 
+with valid credentials
+
+    expect(received).t
+oHaveProperty(path)
+
+    Matcher error: 
+received value must 
+not be null nor 
+undefined
+
+    Received has 
+value: undefined
+
+    [0m [90m 24 
+|[39m
+     [90m 25 |[39m  
+           expect(resp
+onse[33m.[39mstatus)
+[33m.[39mtoBe([35m2
+01[39m)[33m;[39m
+    [31m[1m>[22m[3
+9m[90m 26 |[39m     
+        expect(respons
+e[33m.[39mdata[33m.
+[39mdata)[33m.[39mt
+oHaveProperty([32m'to
+ken'[39m)[33m;[39m
+     [90m    |[39m  
+                      
+                
+[31m[1m^[22m[39m
+     [90m 27 |[39m  
+           expect(resp
+onse[33m.[39mdata[3
+3m.[39mdata[33m.[39
+muser[33m.[39memail)
+[33m.[39mtoBe(testEm
+ail)[33m;[39m
+     [90m 28 |[39m  
+       }[33m,[39m [
+35m15000[39m)[33m;[
+39m [90m// 15s 
+timeout to allow for 
+email sending[39m
+     [90m 29 
+|[39m[0m
+
+      at tests/auth.te
+st.ts:26:40
+      at fulfilled (te
+sts/auth.test.ts:5:58)
+
+  ΓùÅ Auth Endpoints 
+ΓÇ║ POST 
+/api/auth/login ΓÇ║ 
+authenticates user 
+with valid credentials
+
+    expect(received).t
+oHaveProperty(path)
+
+    Matcher error: 
+received value must 
+not be null nor 
+undefined
+
+    Received has 
+value: undefined
+
+    [0m [90m 54 
+|[39m
+     [90m 55 |[39m  
+           expect(resp
+onse[33m.[39mstatus)
+[33m.[39mtoBe([35m2
+00[39m)[33m;[39m
+    [31m[1m>[22m[3
+9m[90m 56 |[39m     
+        expect(respons
+e[33m.[39mdata[33m.
+[39mdata)[33m.[39mt
+oHaveProperty([32m'ac
+cessToken'[39m)[33m;
+[39m
+     [90m    |[39m  
+                      
+                
+[31m[1m^[22m[39m
+     [90m 57 |[39m  
+           [90m// 
+Password should not 
+be in response[39m
+     [90m 58 |[39m  
+           expect(resp
+onse[33m.[39mdata[3
+3m.[39mdata[33m.[39
+muser)[33m.[39mnot[
+33m.[39mtoHavePropert
+y([32m'passwordHash'
+[39m)[33m;[39m
+     [90m 59 |[39m  
+       
+})[33m;[39m[0m
+
+      at tests/auth.te
+st.ts:56:40
+      at fulfilled (te
+sts/auth.test.ts:5:58)
+
+Test Suites: 1 
+failed, 1 total
+Tests:       2 
+failed, 3 passed, 5 
+total
+Snapshots:   0 total
+Time:        15.888 s
+Ran all test suites 
+matching 
+tests/auth.test.ts.
+Force exiting Jest: 
+Have you considered 
+using 
+`--detectOpenHandles` 
+to detect async 
+operations that kept 
+running after all 
+tests finished?

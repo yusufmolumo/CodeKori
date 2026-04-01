@@ -14,6 +14,7 @@ interface DashboardStats {
     totalXp: number;
     level: number;
     currentStreak: number;
+    challengesWon: number;
 }
 
 export default function DashboardPage() {
@@ -104,7 +105,7 @@ export default function DashboardPage() {
                 />
                 <StatsCard
                     title="Challenges Won"
-                    value={0} // Placeholder until we have this data
+                    value={stats?.challengesWon || 0}
                     icon={Target}
                     colorClass="text-red-500"
                     description="Coding challenges completed"
